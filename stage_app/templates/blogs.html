@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}My Blogs · Blog Notes{% endblock %}
+{% block content %}
+<section class="card">
+  <div class="row-between">
+    <h1>My Blogs</h1>
+    <a class="button" href="{{ url_for('new_post') }}">New post</a>
+  </div>
+
+  <form method="get" action="{{ url_for('blogs') }}" class="filters">
+    <label for="tag-filter">Filter by tags</label>
+    <select id="tag-filter" name="tag" onchange="this.form.submit()">
+      <option value="">All tags</option>
+      {% for t in all_tags %}
+        <option value="{{ t }}" {% if t == selected %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+    <a href="{{ url_for('blogs') }}">Clear filters</a>
+  </form>
+
+  <table aria-label="Posts">
+    <thead>
+      <tr><th>Title</th><th>Author</th><th>Date</th><th>Words</th><th>Reading time</th></tr>
+    </thead>
+    <tbody id="posts"></tbody>
+  </table>
+  <p id="empty" hidden>No posts yet.</p>
+</section>
+
+<script>
+  const selected = {{ selected|tojson }};
+  fetch("/api/posts" + (selected ? "?tags=" + encodeURIComponent(selected) : ""))
+    .then(r => r.json())
+    .then(posts => {
+      const body = document.getElementById("posts");
+      document.getElementById("empty").hidden = posts.length > 0;
+      for (const p of posts) {
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-testid", "post-row");
+        tr.setAttribute("data-post-id", p.id);
+        const cells = [
+          ["post-title", p.title], ["post-author", p.author], ["post-date", p.published],
+          ["post-words", p.word_count], ["post-reading-time", p.reading_time_min + " min"],
+        ];
+        for (const [id, value] of cells) {
+          const td = document.createElement("td");
+          td.setAttribute("data-testid", id);
+          td.textContent = value;
+          tr.appendChild(td);
+        }
+        body.appendChild(tr);
+      }
+      document.body.dataset.loaded = "true";
+    });
+</script>
+{% endblock %}

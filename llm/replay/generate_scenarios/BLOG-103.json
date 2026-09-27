@@ -1,0 +1,47 @@
+{
+  "scenarios": [
+    {
+      "id": "SC-103-01",
+      "story_key": "BLOG-103",
+      "ac_ids": ["AC-01"],
+      "title": "Post list shows all metadata columns",
+      "rationale": "AC-01; Figma table 'Posts' defines the expected columns.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "expect_visible", "target": {"testid": "post-row"}},
+        {"action": "figma_check", "frame": "My Blogs", "values": ["Posts"]}
+      ]
+    },
+    {
+      "id": "SC-103-02",
+      "story_key": "BLOG-103",
+      "ac_ids": ["AC-02"],
+      "title": "Word count matches source content",
+      "rationale": "AC-02 / BR-META-01: compare UI, API, calculated and DB values.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "check_calculation", "name": "word_count"}
+      ]
+    },
+    {
+      "id": "SC-103-03",
+      "story_key": "BLOG-103",
+      "ac_ids": ["AC-03"],
+      "title": "Reading time follows ceil(words / 200), minimum 1",
+      "rationale": "AC-03 / BR-META-02: seeded posts cover 120, 260 and 450 words.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "check_calculation", "name": "reading_time"}
+      ]
+    }
+  ]
+}

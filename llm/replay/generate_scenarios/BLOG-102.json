@@ -1,0 +1,75 @@
+{
+  "scenarios": [
+    {
+      "id": "SC-102-01",
+      "story_key": "BLOG-102",
+      "ac_ids": ["AC-01"],
+      "title": "New post opens a form with Title, Content and Tags",
+      "rationale": "AC-01 navigation from My Blogs via the Figma 'New post' action.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "click", "target": {"role": "button", "name": "New post"}},
+        {"action": "expect_url", "contains": "/blogs/new"},
+        {"action": "figma_check", "frame": "New Post", "values": ["Title", "Content", "Tags"]}
+      ]
+    },
+    {
+      "id": "SC-102-02",
+      "story_key": "BLOG-102",
+      "ac_ids": ["AC-02"],
+      "title": "Author is pre-filled and read-only",
+      "rationale": "AC-02 and BR-POST-02; display name from test data.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "goto", "path": "/blogs/new"},
+        {"action": "expect_value", "target": {"label": "Author"}, "text": "Alice Sharma"},
+        {"action": "expect_readonly", "target": {"label": "Author"}}
+      ]
+    },
+    {
+      "id": "SC-102-03",
+      "story_key": "BLOG-102",
+      "ac_ids": ["AC-03"],
+      "title": "Publishing saves the post at the top with today's date",
+      "rationale": "AC-03 with BR-POST-03 date format and BR-POST-04 ordering.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "goto", "path": "/blogs/new"},
+        {"action": "fill", "target": {"label": "Title"}, "value": "Assurance check post"},
+        {"action": "fill", "target": {"label": "Content"}, "value": "This post was written by the assurance agent during a Stage run."},
+        {"action": "fill", "target": {"label": "Tags"}, "value": "release"},
+        {"action": "click", "target": {"role": "button", "name": "Publish"}},
+        {"action": "expect_url", "contains": "/blogs"},
+        {"action": "expect_text", "target": {"testid": "post-title"}, "text": "Assurance check post"},
+        {"action": "expect_text", "target": {"testid": "post-date"}, "text": "${TODAY}"}
+      ]
+    },
+    {
+      "id": "SC-102-04",
+      "story_key": "BLOG-102",
+      "ac_ids": ["AC-04"],
+      "title": "Publishing without a title shows a validation error",
+      "rationale": "AC-04 negative path; message from BR-POST-01.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "goto", "path": "/blogs/new"},
+        {"action": "fill", "target": {"label": "Content"}, "value": "A body without any title."},
+        {"action": "click", "target": {"role": "button", "name": "Publish"}},
+        {"action": "expect_text", "target": {"testid": "form-error"}, "text": "Title is required"},
+        {"action": "expect_url", "contains": "/blogs/new"}
+      ]
+    }
+  ]
+}

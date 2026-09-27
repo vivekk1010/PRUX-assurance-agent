@@ -1,0 +1,16 @@
+{
+  "_note": "Human-assigned expected labels for the seeded Stage build (PRD-001 §11).",
+  "stories": {
+    "BLOG-101": {"AC-01": "PASS", "AC-02": "PASS", "AC-03": "PASS"},
+    "BLOG-102": {"AC-01": "PASS", "AC-02": "PASS", "AC-03": "PASS", "AC-04": "PASS"},
+    "BLOG-103": {"AC-01": "PASS", "AC-02": "PASS", "AC-03": "DEFECT"},
+    "BLOG-104": {"AC-01": "GAP", "AC-02": "PASS"},
+    "BLOG-105": {"AC-01": "PASS", "AC-02": "PASS", "AC-03": "RISK"}
+  },
+  "known_issues": [
+    {"story": "BLOG-103", "ac": "AC-03", "expected": "DEFECT", "issue": "reading time uses floor instead of ceil"},
+    {"story": "BLOG-104", "ac": "AC-01", "expected": "GAP", "issue": "single-select tag filter vs Figma multi-select"},
+    {"story": "BLOG-105", "ac": "AC-03", "expected": "RISK", "issue": "unmeasurable 'load fast' AC"}
+  ],
+  "figma_frames": {"Login": "PASS", "My Blogs": "GAP", "New Post": "PASS"}
+}

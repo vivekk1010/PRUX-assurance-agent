@@ -1,2 +1,270 @@
-# PRUX-assurance-agent
-PRD and UX figma assurance agent
+# Stage Requirement & UX Assurance Agent
+
+**Author:** Vivek Kaushik
+
+An AI agent that answers one question with evidence: **does the Stage implementation match the Jira story and the Figma design?**
+
+It reads the story and the Figma file (over MCP), grounds itself in engineering context (local RAG), generates test scenarios traced to acceptance criteria (ACs), drives the Stage app in a real browser, and checks UI, API, database and calculations. Every Figma frame and every AC gets a **PASS**, **GAP**, **DEFECT** or **RISK** verdict, backed by side-by-side screenshots, Playwright traces and data evidence.
+
+- Product requirements: [docs/prd/001-stage-requirement-assurance-agent.md](docs/prd/001-stage-requirement-assurance-agent.md)
+- Architecture: [docs/architecture/architecture.md](docs/architecture/architecture.md)
+
+## Verdict labels
+
+| Label | Meaning | Typical cause |
+|---|---|---|
+| **PASS** | Implementation matches the story and the design | All checks pass; differences are approved Figma variances only |
+| **GAP** | Something the story or design asks for is missing or different | Component missing, wrong control type, flow trigger missing |
+| **DEFECT** | Implemented but behaves wrongly | Wrong calculation, wrong navigation, wrong data |
+| **RISK** | Cannot be verified with confidence | Ambiguous AC, login failure, locator only found by recovery |
+
+Precedence when several apply: DEFECT > GAP > RISK > PASS. Labels come from deterministic checks (`agent/classifier.py`, `agent/conformance.py`). The LLM never decides a label.
+
+## Results on the current Stage build (live OpenAI run)
+
+### Figma conformance (per frame)
+
+| Frame | Route | Verdict | Evidence |
+|---|---|---|---|
+| Login | `/login` | PASS | 4 components and the `Log in → My Blogs` flow match |
+| My Blogs | `/blogs` | **GAP** | Figma node 2:6 `Filter by tags` is a multi-select; Stage renders a single-select dropdown |
+| New Post | `/blogs/new` | PASS | `Publish` rendered as `Save post` is an approved variance; all flows land on the designed routes |
+
+### Stories (per AC)
+
+| Story | What it checks | Verdict | Why |
+|---|---|---|---|
+| BLOG-101 Log in | Valid and invalid login, Login frame | PASS | All checks pass |
+| BLOG-102 Create post | Form, read-only author, publish, validation | PASS | Approved variance on the Publish button |
+| BLOG-103 Metadata | Word count, reading time (UI vs API vs rule vs DB) | **DEFECT** (AC-03) | 450 words: UI and API show 2 min, rule `ceil(450/200)` gives 3 |
+| BLOG-104 Tag filter | Multi-tag filter, clear filters | **GAP** (AC-01) | Cannot select `ai` and `travel` together: control is single-select |
+| BLOG-105 Logout | Logout, session protection, "should load fast" | **RISK** (AC-03) | "Fast" has no threshold; load time is measured and reported only |
+
+Replay-mode evaluation over 3 repeated runs: AC coverage 100%, label accuracy 100%, known issues detected 3/3, false positives 0, flake rate 0%, evidence completeness 100%. The live run above (gpt-4o-mini for planning, gpt-4o for the visual review) gives the same labels.
+
+## Outputs and how to read them
+
+Each run writes a folder `runs/<run-id>/` (for example `runs/20260927-183300/`). `runs/LATEST` holds the newest run id.
+
+### 1. `report.html`: the human-readable verdict
+
+Open it in any browser. Sections, top to bottom:
+
+1. **Run header**: run id, author, Stage URL, LLM provider and model, UX source (Figma fixture or REST), RAG embedder. Token usage per task is in `results.json`.
+2. **Figma conformance summary**: one row per frame with route, verdict and a one-line rationale.
+3. **Frame cards** (one per Figma frame):
+   - **Design vs Live, side by side**: the Figma frame PNG next to a Stage screenshot at the same viewport (1280×800). Components with a problem are outlined on the design image at their Figma position: **red** for missing or mismatched, **amber** for approved variances.
+   - **Components table**: Figma node id, kind, label, status (`matched`, `missing`, `mismatch`, `approved_variance`, `skipped` for conditional states) and what was observed.
+   - **Prototype flows table**: trigger, designed destination route, observed URL, status.
+   - **Visual review (advisory)**: a vision model's list of layout/style differences with severity. It never changes the verdict.
+   - **Evidence links**: design PNG, live PNG, Playwright trace, `verdict.json`.
+4. **Story sections** (one per story): story verdict, recommendation, then one row per AC with verdict, rationale and links to the scenario steps, screenshots, traces and calculation files that justify it.
+
+### 2. `results.json`: the machine-readable verdict
+
+```json
+{
+  "meta": {"run_id": "...", "author": "Vivek Kaushik", "stage_base_url": "...", "llm_provider": "openai",
+           "llm_model": "gpt-4o-mini", "ux_source": "fixture", "embedder": "...", "figma_llm_usage": {}},
+  "figma_conformance": [
+    {"frame": "My Blogs", "node_id": "2:1", "route": "/blogs", "label": "GAP", "rationale": "...",
+     "components": [{"node_id": "2:6", "kind": "multi-select", "label": "Filter by tags",
+                     "box": {"x": 0, "y": 0, "width": 0, "height": 0}, "status": "mismatch", "detail": "..."}],
+     "flows": [{"trigger_label": "New post", "to_frame": "New Post", "expected_path": "/blogs/new",
+                "observed_url": "...", "status": "ok", "detail": ""}],
+     "visual_review": {"summary": "...", "observations": [{"area": "...", "difference": "...", "severity": "low"}]},
+     "design_image": "figma/my-blogs/design.png", "live_image": "figma/my-blogs/live.png",
+     "trace_path": "figma/my-blogs/trace.zip", "duration_ms": 0}
+  ],
+  "stories": [
+    {"story_key": "BLOG-103", "label": "DEFECT", "recommendation": "...",
+     "ac_verdicts": [{"ac_id": "AC-03", "label": "DEFECT", "rationale": "...", "scenario_ids": ["SC-103-03"], "evidence": ["..."]}],
+     "scenario_results": ["..."], "intent_path": "...", "scenarios_path": "...", "llm_usage": {}, "duration_ms": 0}
+  ]
+}
+```
+
+Use it for CI gates (fail the pipeline on any DEFECT or GAP) or dashboards.
+
+### 3. Evidence folder
+
+```
+runs/<run-id>/
+  report.html  results.json
+  figma/
+    my-blogs/
+      design.png       Figma frame export (MCP get_frame_image)
+      live.png         Stage screenshot of the frame's route
+      verdict.json     frame verdict, components, flows, visual review
+      step-*.png       screenshots of login and flow checks
+      trace.zip        playwright show-trace runs\<id>\figma\my-blogs\trace.zip
+      network.json     API calls captured (secrets masked)
+  BLOG-103/
+    intent.json        expected-behavior record built before execution
+    scenarios.json     AC-tagged scenarios
+    result.json        story verdict
+    SC-103-03/
+      step-01-goto.png ... step-06-check_calculation.png
+      trace.zip  network.json
+      calculation-reading_time.json   UI / API / rule / source values per post
+```
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U([User]) -->|CLI or MCP| A[Agent<br/>LangGraph]
+    J[(stories/<br/>Jira export)] --> A
+    F[[Figma MCP server]] -->|stdio| A
+    K[(knowledge_base/)] --> R[(Local RAG<br/>.rag_index)]
+    J --> R
+    F --> R
+    R --> A
+    A <--> L[LLM gateway<br/>OpenAI / Azure / replay]
+    A -->|allow-listed steps| P[Playwright] --> S[Stage app]
+    A -->|read-only| D[(Stage DB)]
+    A --> E[(runs/: design vs live,<br/>traces, network, data)]
+    A --> O[report.html + results.json]
+```
+
+- **Figma conformance** (once per run): for each frame, fetch components, routes and the frame PNG over MCP → open the route in Stage → compare every component (kind, label, read-only, table columns) → click every prototype flow trigger and compare the landing URL with the designed route → optional vision review → frame verdict.
+- **Story assurance** (per story): `reset_stage_data → load_story → load_ux_intent (MCP) → retrieve_context (RAG) → build_intent (LLM) → generate_scenarios (LLM) → execute_scenarios (Playwright, LLM recovery only on locator failure) → classify (rules) → report`.
+
+## Folder map
+
+| Folder | Role | Key files |
+|---|---|---|
+| `agent/` | The agent: orchestration, conformance, validation, reporting, CLI | `cli.py`, `orchestrator.py`, `conformance.py`, `executor.py`, `classifier.py`, `guardrails.py` |
+| `agent/tools/` | Execution layer | `browser.py` (Playwright), `data.py` (read-only DB, 4-way calculation check), `figma_compare.py` |
+| `agent/sources/` | Intent inputs | `jira.py` (file-based Jira), `figma_client.py` (MCP client) |
+| `agent/reporting/` | Report generation | `report.py`, `templates/report.html.j2` |
+| `llm/` | LLM gateway, provider-agnostic | `client.py`, `prompts/*.md`, `replay/` (recorded outputs) |
+| `rag/` | Local RAG, no external DB | `ingest.py`, `embeddings.py`, `store.py`, `retriever.py` |
+| `mcp_servers/figma_mock/` | Figma MCP server (fixture or real Figma REST) | `server.py`, `figma_parser.py`, `render_frames.py`, `fixtures/blog_notes.figma.json`, `fixtures/frames/*.png` |
+| `mcp_servers/assurance_agent/` | The agent exposed as an MCP server | `server.py` |
+| `stage_app/` | Stage application under test: "Blog Notes" (Flask + SQLite) | `app.py`, `seed.py`, `templates/` |
+| `stories/` | Jira stories with ACs | `BLOG-101..105.json` |
+| `knowledge_base/` | Engineering context for RAG | business rules, UI/API contract, test data, glossary, flow test data |
+| `evals/` | Gold labels and evaluation runner | `gold_labels.json`, `run_eval.py` |
+| `tests/` | Unit and integration tests | `test_*.py` |
+| `runs/` | Output per run (gitignored) | `report.html`, `results.json`, evidence |
+
+## Quick start (Windows PowerShell)
+
+Python 3.10+ (tested with 3.14). No GPU needed.
+
+```powershell
+cd C:\Scaler\Cohort\PR-UX-assurance-agent
+py -3.14 -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python -m playwright install chromium
+copy .env.example .env          # set STAGE_PASSWORD (any value) and OPENAI_API_KEY (optional: replay mode without it)
+
+python -m agent ingest          # build the local RAG index (pulls Figma via MCP)
+python -m agent run --all --start-stage
+start runs\<run-id>\report.html
+```
+
+Figma conformance only: `python -m agent conformance --start-stage`.
+Watch the browser: add `--headed`.
+Run the Stage app by itself: `python -m stage_app.seed` then `python -m stage_app`, open http://127.0.0.1:5055 (user `alice`, password from `.env`).
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `python -m agent run --all` | Figma conformance for every frame, then assure every story |
+| `python -m agent run --story BLOG-103` | Figma conformance, then assure one story (repeat `--story` for more) |
+| `python -m agent run --all --no-figma` | Stories only, skip frame conformance |
+| `python -m agent conformance` | Figma conformance only: per-frame verdict with design vs live evidence |
+| `python -m agent figma` | Show frames, node ids, routes and design images from the Figma MCP server |
+| `python -m agent search "reading time"` | Query the RAG index |
+| `python -m agent ingest` | Rebuild the RAG index after editing stories or the knowledge base |
+| `python -m agent graph` | Print the orchestrator graph as Mermaid |
+| `python -m evals.run_eval --runs 3 --start-stage` | Label accuracy, frame accuracy, flake, evidence, latency, cost vs gold labels |
+| `python -m pytest` | Tests |
+
+Common flags: `--start-stage` starts the Stage app for the run, `--no-reset` skips the data reset, `--headed` shows the browser.
+
+### From Cursor or any MCP client
+
+Add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "figma-mock": {
+      "command": "C:\\Scaler\\Cohort\\PR-UX-assurance-agent\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "mcp_servers.figma_mock.server"],
+      "env": { "PYTHONPATH": "C:\\Scaler\\Cohort\\PR-UX-assurance-agent" }
+    },
+    "PR-UX-assurance-agent": {
+      "command": "C:\\Scaler\\Cohort\\PR-UX-assurance-agent\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "mcp_servers.assurance_agent.server"],
+      "env": { "PYTHONPATH": "C:\\Scaler\\Cohort\\PR-UX-assurance-agent" }
+    }
+  }
+}
+```
+
+Agent tools: `list_stories`, `check_figma_conformance` (per-frame verdicts and report path) and `run_assurance` (per-AC verdicts for a story). Example prompt: *"Check whether Stage matches the Figma design"*.
+
+## LLM
+
+| Mode | How to enable | Used for |
+|---|---|---|
+| `openai` | `OPENAI_API_KEY` (`OPENAI_MODEL`, default `gpt-4o-mini`; `VISION_MODEL`, default `gpt-4o`) | Intent building, scenario generation, locator recovery, recommendations, visual review |
+| `azure` | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_VISION_DEPLOYMENT` | Same |
+| any OpenAI-compatible | `OPENAI_BASE_URL` + key | Same |
+| `replay` (no key) | nothing | Recorded outputs in `llm/replay/`; zero cost, repeatable. No visual review |
+
+`LLM_RECORD=1` saves live outputs into `llm/replay/`. The key is read from `.env`, which is gitignored; never commit it.
+
+## Local RAG
+
+- Sources: `stories/` (one chunk per story and per AC), `knowledge_base/*.md` (one chunk per heading), Figma frames and approved variances.
+- Embeddings: OpenAI `text-embedding-3-small` when a key is set, otherwise an offline hashing embedder.
+- Store: numpy matrix + JSON in `.rag_index/`, cosine search.
+- Every intent records `context_sources`, so you can see which rules grounded it.
+
+## Figma MCP
+
+`mcp_servers/figma_mock/server.py` is an MCP server (stdio) with these tools: `get_file_info`, `list_frames`, `get_frame_components`, `get_prototype_flows`, `get_approved_variances`, `get_story_frames`, `get_frame_routes` and `get_frame_image`.
+
+- `FIGMA_SOURCE=fixture` (default): serves `fixtures/blog_notes.figma.json` in the same JSON shape as Figma's `GET /v1/files/:key` (with `absoluteBoundingBox` per node), and frame PNGs from `fixtures/frames/` (regenerate with `python -m mcp_servers.figma_mock.render_frames`).
+- `FIGMA_SOURCE=rest`: set `FIGMA_TOKEN` and `FIGMA_FILE_KEY`. The same parser reads your file and `get_frame_image` downloads PNGs from `GET /v1/images/:key`. Name component instances `TextInput`, `Button`, `MultiSelect`, `Table`… and put the label in a `Label` property.
+- Frame routes (`x-frameRoutes`), story links (`x-storyLinks`) and approved variances (`x-approvedVariances`) are file-level metadata; in a real Figma file they map to Dev Mode links and annotations.
+
+## Guardrails and data handling
+
+| Risk | Control |
+|---|---|
+| Destructive actions | Allow-listed step language; clicks or paths matching delete/remove/reset/admin are refused and recorded; a refusal blocks PASS |
+| Leaving Stage | Navigation restricted to `STAGE_BASE_URL`; DB opened read-only (`mode=ro`, SELECT only) |
+| Credentials and PII | `${STAGE_USER}` / `${STAGE_PASSWORD}` placeholders resolved only inside the browser tool; the LLM never sees them. Password masked in logs, reports, `network.json` and inside Playwright traces |
+| Hallucinated requirements | Intent saved before execution; scenarios citing unknown AC ids are dropped; unmeasurable ACs become RISK |
+| Vision false positives | Visual review is advisory; notes about conditional states or approved variances are filtered out |
+| Flakiness | Stage data reset before every story; state-aware waits; flake rate measured by `evals/run_eval.py` |
+| HTML injection in reports | Report template autoescapes all story and evidence text |
+
+## Failure analysis
+
+| What happened | Fix |
+|---|---|
+| `mcp` 2.x renamed `FastMCP` and broke the server | Pinned `mcp>=1.9,<2` |
+| Playwright traces contained the plaintext password | Traces scrubbed after each scenario (`guardrails.scrub_zip`); verified 0 leaks |
+| A failed multi-tag selection cascaded into a false DEFECT on the row check | Steps after a failed interaction are marked `skipped`, so the AC is GAP |
+| Live scenario generation used `label=` targets for buttons, links and headings | Browser tool resolves equivalent forms (label, button, link, heading, text) of the same name and records how it resolved; prompt gives a target rule per Figma kind |
+| Live scenarios used `${STAGE_USER}` as the display name, hard-coded reading times, and expected Bob's posts on Alice's list | Prompt rules for credentials, calculations and row checks; full test data (with visibility and tag expectations) passed to the LLM |
+| `expect_value` used on table cells | Falls back to the element's text for non-input elements |
+| gpt-4o-mini visual review reported conditional error text and the approved "Save post" label as high severity, and used about 222k image tokens per run | Prompt lists expected components, conditional states and approved variances; matching notes filtered; vision model switched to gpt-4o (about 8k tokens) |
+| gpt-4o visual review does not notice the multi-select vs dropdown difference | Accepted: the deterministic component check catches it and sets the GAP; the visual review is advisory only |
+| Report dropped `<display name>` from AC text | Jinja autoescape forced on |
+| Windows console crashed on `▶` / `⇒` | CLI forces UTF-8 output |
+
+## Roadmap
+
+- Replace `agent/sources/jira.py` with Jira Cloud REST behind the same functions.
+- Add a single-prompt baseline to `evals/` to compare against the agentic flow.
+- Pixel-diff scoring per component box to complement the vision review.

@@ -1,0 +1,30 @@
+{
+  "key": "BLOG-102",
+  "type": "Story",
+  "status": "Ready for QA",
+  "priority": "High",
+  "title": "Create a blog post",
+  "actor": "Logged-in blogger",
+  "description": "As a logged-in blogger, I want to write a blog post as plain text with a title and tags, so that my notes are stored with the right metadata.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "Given a logged-in user on 'My Blogs', when they click 'New post', then a form with Title, Content and Tags fields is shown."
+    },
+    {
+      "id": "AC-02",
+      "text": "The Author field on the New post form is pre-filled with the logged-in user's display name and cannot be edited."
+    },
+    {
+      "id": "AC-03",
+      "text": "When the user fills Title and Content and clicks 'Publish', the post is saved and appears at the top of 'My Blogs' with today's date in YYYY-MM-DD format."
+    },
+    {
+      "id": "AC-04",
+      "text": "When the user clicks 'Publish' without a Title, the message 'Title is required' is shown and the post is not saved."
+    }
+  ],
+  "business_rules": ["BR-POST-01", "BR-POST-02", "BR-POST-03", "BR-POST-04"],
+  "figma_frames": ["My Blogs", "New Post"],
+  "labels": ["posts", "mvp"]
+}

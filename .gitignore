@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+!.env.example
+*.key
+*Key.txt
+.rag_index/
+.figma_cache/
+runs/
+stage_app/instance/
+evals/results/
+*.log

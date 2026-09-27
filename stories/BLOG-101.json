@@ -1,0 +1,26 @@
+{
+  "key": "BLOG-101",
+  "type": "Story",
+  "status": "Ready for QA",
+  "priority": "High",
+  "title": "Log in to Blog Notes",
+  "actor": "Registered blogger",
+  "description": "As a registered blogger, I want to log in with my username and password, so that I can see and manage my own blog posts.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "Given a registered user on the Login page, when they enter a valid username and password and click 'Log in', then they land on the 'My Blogs' page and see 'Welcome, <display name>'."
+    },
+    {
+      "id": "AC-02",
+      "text": "Given a registered user on the Login page, when they enter a wrong password and click 'Log in', then the message 'Invalid username or password' is shown and they stay on the Login page."
+    },
+    {
+      "id": "AC-03",
+      "text": "The Login page shows a Username field, a Password field and a 'Log in' button, as in the approved design."
+    }
+  ],
+  "business_rules": ["BR-AUTH-01", "BR-AUTH-02"],
+  "figma_frames": ["Login"],
+  "labels": ["auth", "mvp"]
+}

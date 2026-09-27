@@ -1,0 +1,52 @@
+{
+  "scenarios": [
+    {
+      "id": "SC-104-01",
+      "story_key": "BLOG-104",
+      "ac_ids": ["AC-01"],
+      "title": "Filter by two tags shows posts with any selected tag",
+      "rationale": "AC-01 'one or more tags' with BR-TAG-02 OR logic; expected titles from test data.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "figma_check", "frame": "My Blogs", "values": ["Filter by tags"]},
+        {"action": "select", "target": {"label": "Filter by tags"}, "values": ["ai", "travel"]},
+        {"action": "expect_rows", "values": ["Notes on RAG", "Weekend hike"]}
+      ]
+    },
+    {
+      "id": "SC-104-02",
+      "story_key": "BLOG-104",
+      "ac_ids": ["AC-01"],
+      "title": "Filter by a single tag",
+      "rationale": "AC-01 lower bound: one tag.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "select", "target": {"label": "Filter by tags"}, "values": ["ai"]},
+        {"action": "expect_rows", "values": ["Notes on RAG"]}
+      ]
+    },
+    {
+      "id": "SC-104-03",
+      "story_key": "BLOG-104",
+      "ac_ids": ["AC-02"],
+      "title": "Clear filters shows all posts again",
+      "rationale": "AC-02 reset behaviour.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "select", "target": {"label": "Filter by tags"}, "values": ["ai"]},
+        {"action": "expect_rows", "values": ["Notes on RAG"]},
+        {"action": "click", "target": {"role": "link", "name": "Clear filters"}},
+        {"action": "expect_rows", "values": ["Notes on RAG", "Getting started with Playwright", "Weekend hike"]}
+      ]
+    }
+  ]
+}

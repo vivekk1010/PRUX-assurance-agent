@@ -1,0 +1,13 @@
+{
+  "_note": "Inputs the Figma conformance check enters before clicking a prototype trigger. Keys are '<frame>/<trigger label>'.",
+  "prerequisites": {
+    "Login/Log in": [
+      {"label": "Username", "value": "${STAGE_USER}"},
+      {"label": "Password", "value": "${STAGE_PASSWORD}"}
+    ],
+    "New Post/Publish": [
+      {"label": "Title", "value": "Figma flow check"},
+      {"label": "Content", "value": "Created by the Figma conformance flow check."}
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "key": "BLOG-104",
+  "type": "Story",
+  "status": "Ready for QA",
+  "priority": "Medium",
+  "title": "Filter posts by tags",
+  "actor": "Logged-in blogger",
+  "description": "As a logged-in blogger, I want to filter my posts by one or more tags, so that I can find related notes quickly.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "On 'My Blogs', the user can select one or more tags in 'Filter by tags'; the list then shows only posts that have any of the selected tags."
+    },
+    {
+      "id": "AC-02",
+      "text": "Clicking 'Clear filters' shows all of the user's posts again."
+    }
+  ],
+  "business_rules": ["BR-TAG-01", "BR-TAG-02"],
+  "figma_frames": ["My Blogs"],
+  "labels": ["posts", "filter"]
+}

@@ -1,0 +1,46 @@
+{
+  "scenarios": [
+    {
+      "id": "SC-101-01",
+      "story_key": "BLOG-101",
+      "ac_ids": ["AC-01"],
+      "title": "Valid login lands on My Blogs with welcome message",
+      "rationale": "Happy path for AC-01 using the primary test user.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "expect_url", "contains": "/blogs"},
+        {"action": "expect_visible", "target": {"role": "heading", "name": "My Blogs"}},
+        {"action": "expect_text", "target": {"testid": "welcome"}, "text": "Welcome, Alice Sharma"}
+      ]
+    },
+    {
+      "id": "SC-101-02",
+      "story_key": "BLOG-101",
+      "ac_ids": ["AC-02"],
+      "title": "Wrong password shows error and stays on Login",
+      "rationale": "Negative path for AC-02; message text from BR-AUTH-02.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "not-the-password"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "expect_text", "target": {"testid": "login-error"}, "text": "Invalid username or password"},
+        {"action": "expect_url", "contains": "/login"}
+      ]
+    },
+    {
+      "id": "SC-101-03",
+      "story_key": "BLOG-101",
+      "ac_ids": ["AC-03"],
+      "title": "Login page matches approved design",
+      "rationale": "AC-03 refers to the approved design; compare the Login frame.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "figma_check", "frame": "Login"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "scenarios": [
+    {
+      "id": "SC-105-01",
+      "story_key": "BLOG-105",
+      "ac_ids": ["AC-01"],
+      "title": "Log out returns to Login",
+      "rationale": "AC-01; Figma flow My Blogs -> Log out -> Login.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "click", "target": {"role": "button", "name": "Log out"}},
+        {"action": "expect_url", "contains": "/login"},
+        {"action": "expect_visible", "target": {"label": "Username"}}
+      ]
+    },
+    {
+      "id": "SC-105-02",
+      "story_key": "BLOG-105",
+      "ac_ids": ["AC-02"],
+      "title": "Protected page redirects after logout",
+      "rationale": "AC-02 / BR-AUTH-03.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "click", "target": {"role": "button", "name": "Log out"}},
+        {"action": "goto", "path": "/blogs"},
+        {"action": "expect_url", "contains": "/login"}
+      ]
+    },
+    {
+      "id": "SC-105-03",
+      "story_key": "BLOG-105",
+      "ac_ids": ["AC-03"],
+      "title": "Measure My Blogs load time",
+      "rationale": "AC-03 has no threshold; measure and report as a signal only.",
+      "steps": [
+        {"action": "goto", "path": "/login"},
+        {"action": "fill", "target": {"label": "Username"}, "value": "${STAGE_USER}"},
+        {"action": "fill", "target": {"label": "Password"}, "value": "${STAGE_PASSWORD}"},
+        {"action": "click", "target": {"role": "button", "name": "Log in"}},
+        {"action": "measure_load", "path": "/blogs"}
+      ]
+    }
+  ]
+}

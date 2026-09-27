@@ -1,0 +1,26 @@
+{
+  "key": "BLOG-103",
+  "type": "Story",
+  "status": "Ready for QA",
+  "priority": "Medium",
+  "title": "Show blog metadata and reading time",
+  "actor": "Logged-in blogger",
+  "description": "As a logged-in blogger, I want each post in my list to show its metadata, so that I can see at a glance who wrote it, when, and how long it takes to read.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "Each post on 'My Blogs' shows Title, Author, Date, Words and Reading time."
+    },
+    {
+      "id": "AC-02",
+      "text": "Words equals the number of whitespace-separated words in the post content (see BR-META-01)."
+    },
+    {
+      "id": "AC-03",
+      "text": "Reading time equals ceil(Words / 200) minutes with a minimum of 1 minute (see BR-META-02)."
+    }
+  ],
+  "business_rules": ["BR-META-01", "BR-META-02", "BR-META-03"],
+  "figma_frames": ["My Blogs"],
+  "labels": ["posts", "calculation"]
+}

@@ -1,0 +1,10 @@
+[project]
+name = "PR-UX-assurance-agent"
+version = "0.1.0"
+description = "Agentic Stage Requirement & UX Assurance"
+authors = [{ name = "Vivek Kaushik" }]
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

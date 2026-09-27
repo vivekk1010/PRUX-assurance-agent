@@ -1,0 +1,179 @@
+{
+  "name": "Blog Notes - Approved UX v1",
+  "lastModified": "2026-09-10T09:30:00Z",
+  "version": "1001",
+  "document": {
+    "id": "0:0",
+    "name": "Document",
+    "type": "DOCUMENT",
+    "children": [
+      {
+        "id": "0:1",
+        "name": "Blog Notes v1",
+        "type": "CANVAS",
+        "children": [
+          {
+            "id": "1:1",
+            "name": "Login",
+            "type": "FRAME",
+            "absoluteBoundingBox": {"x": 0, "y": 0, "width": 1280, "height": 800},
+            "fills": [{"type": "SOLID", "color": {"r": 0.961, "g": 0.965, "b": 0.973, "a": 1}}],
+            "children": [
+              {"id": "1:90", "name": "Top bar", "type": "RECTANGLE",
+               "absoluteBoundingBox": {"x": 0, "y": 0, "width": 1280, "height": 48},
+               "fills": [{"type": "SOLID", "color": {"r": 0.114, "g": 0.137, "b": 0.188, "a": 1}}]},
+              {"id": "1:91", "name": "Brand", "type": "TEXT", "characters": "Blog Notes",
+               "absoluteBoundingBox": {"x": 24, "y": 13, "width": 200, "height": 22},
+               "style": {"fontSize": 16, "fontWeight": 700},
+               "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1, "a": 1}}]},
+              {"id": "1:92", "name": "Card", "type": "RECTANGLE", "cornerRadius": 8,
+               "absoluteBoundingBox": {"x": 450, "y": 72, "width": 380, "height": 330},
+               "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1, "a": 1}}]},
+              {"id": "1:2", "name": "Heading", "type": "INSTANCE", "componentId": "C:heading",
+               "absoluteBoundingBox": {"x": 474, "y": 96, "width": 332, "height": 40},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Log in"}}},
+              {"id": "1:3", "name": "TextInput", "type": "INSTANCE", "componentId": "C:text-input",
+               "absoluteBoundingBox": {"x": 474, "y": 152, "width": 332, "height": 64},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Username"}}},
+              {"id": "1:4", "name": "PasswordInput", "type": "INSTANCE", "componentId": "C:password-input",
+               "absoluteBoundingBox": {"x": 474, "y": 228, "width": 332, "height": 64},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Password"}}},
+              {"id": "1:5", "name": "Button", "type": "INSTANCE", "componentId": "C:button",
+               "absoluteBoundingBox": {"x": 474, "y": 320, "width": 88, "height": 38},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Log in"}, "Variant": {"type": "VARIANT", "value": "Primary"}},
+               "interactions": [{"trigger": {"type": "ON_CLICK"}, "actions": [{"type": "NODE", "destinationId": "2:1", "navigation": "NAVIGATE"}]}]},
+              {"id": "1:6", "name": "ErrorText", "type": "INSTANCE", "componentId": "C:error-text",
+               "absoluteBoundingBox": {"x": 474, "y": 140, "width": 332, "height": 20},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Invalid username or password"}, "State": {"type": "VARIANT", "value": "Conditional"}}}
+            ]
+          },
+          {
+            "id": "2:1",
+            "name": "My Blogs",
+            "type": "FRAME",
+            "absoluteBoundingBox": {"x": 1400, "y": 0, "width": 1280, "height": 800},
+            "fills": [{"type": "SOLID", "color": {"r": 0.961, "g": 0.965, "b": 0.973, "a": 1}}],
+            "children": [
+              {"id": "2:90", "name": "Top bar", "type": "RECTANGLE",
+               "absoluteBoundingBox": {"x": 1400, "y": 0, "width": 1280, "height": 48},
+               "fills": [{"type": "SOLID", "color": {"r": 0.114, "g": 0.137, "b": 0.188, "a": 1}}]},
+              {"id": "2:91", "name": "Brand", "type": "TEXT", "characters": "Blog Notes",
+               "absoluteBoundingBox": {"x": 1424, "y": 13, "width": 200, "height": 22},
+               "style": {"fontSize": 16, "fontWeight": 700},
+               "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1, "a": 1}}]},
+              {"id": "2:3", "name": "Text", "type": "INSTANCE", "componentId": "C:text",
+               "absoluteBoundingBox": {"x": 2390, "y": 14, "width": 170, "height": 20},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Welcome,"}, "Sample": {"type": "TEXT", "value": "Alice Sharma"}, "Tone": {"type": "VARIANT", "value": "Inverse"}}},
+              {"id": "2:5", "name": "Button", "type": "INSTANCE", "componentId": "C:button",
+               "absoluteBoundingBox": {"x": 2576, "y": 8, "width": 84, "height": 32},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Log out"}, "Variant": {"type": "VARIANT", "value": "Secondary"}},
+               "interactions": [{"trigger": {"type": "ON_CLICK"}, "actions": [{"type": "NODE", "destinationId": "1:1", "navigation": "NAVIGATE"}]}]},
+              {"id": "2:92", "name": "Card", "type": "RECTANGLE", "cornerRadius": 8,
+               "absoluteBoundingBox": {"x": 1560, "y": 72, "width": 960, "height": 400},
+               "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1, "a": 1}}]},
+              {"id": "2:2", "name": "Heading", "type": "INSTANCE", "componentId": "C:heading",
+               "absoluteBoundingBox": {"x": 1584, "y": 96, "width": 300, "height": 40},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "My Blogs"}}},
+              {"id": "2:4", "name": "Button", "type": "INSTANCE", "componentId": "C:button",
+               "absoluteBoundingBox": {"x": 2398, "y": 98, "width": 98, "height": 38},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "New post"}, "Variant": {"type": "VARIANT", "value": "Primary"}},
+               "interactions": [{"trigger": {"type": "ON_CLICK"}, "actions": [{"type": "NODE", "destinationId": "3:1", "navigation": "NAVIGATE"}]}]},
+              {"id": "2:6", "name": "MultiSelect", "type": "INSTANCE", "componentId": "C:multi-select",
+               "absoluteBoundingBox": {"x": 1584, "y": 152, "width": 460, "height": 40},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Filter by tags"}, "Options": {"type": "TEXT", "value": "ai,travel"}}},
+              {"id": "2:7", "name": "Link", "type": "INSTANCE", "componentId": "C:link",
+               "absoluteBoundingBox": {"x": 2060, "y": 162, "width": 100, "height": 20},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Clear filters"}}},
+              {"id": "2:8", "name": "Table", "type": "INSTANCE", "componentId": "C:table",
+               "absoluteBoundingBox": {"x": 1584, "y": 212, "width": 912, "height": 180},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Posts"},
+                                       "Columns": {"type": "TEXT", "value": "Title|Author|Date|Words|Reading time"}}}
+            ]
+          },
+          {
+            "id": "3:1",
+            "name": "New Post",
+            "type": "FRAME",
+            "absoluteBoundingBox": {"x": 2800, "y": 0, "width": 1280, "height": 800},
+            "fills": [{"type": "SOLID", "color": {"r": 0.961, "g": 0.965, "b": 0.973, "a": 1}}],
+            "children": [
+              {"id": "3:90", "name": "Top bar", "type": "RECTANGLE",
+               "absoluteBoundingBox": {"x": 2800, "y": 0, "width": 1280, "height": 48},
+               "fills": [{"type": "SOLID", "color": {"r": 0.114, "g": 0.137, "b": 0.188, "a": 1}}]},
+              {"id": "3:91", "name": "Brand", "type": "TEXT", "characters": "Blog Notes",
+               "absoluteBoundingBox": {"x": 2824, "y": 13, "width": 200, "height": 22},
+               "style": {"fontSize": 16, "fontWeight": 700},
+               "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1, "a": 1}}]},
+              {"id": "3:92", "name": "Card", "type": "RECTANGLE", "cornerRadius": 8,
+               "absoluteBoundingBox": {"x": 2960, "y": 72, "width": 960, "height": 610},
+               "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1, "a": 1}}]},
+              {"id": "3:2", "name": "Heading", "type": "INSTANCE", "componentId": "C:heading",
+               "absoluteBoundingBox": {"x": 2984, "y": 96, "width": 300, "height": 40},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "New post"}}},
+              {"id": "3:3", "name": "TextInput", "type": "INSTANCE", "componentId": "C:text-input",
+               "absoluteBoundingBox": {"x": 2984, "y": 152, "width": 912, "height": 64},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Title"}}},
+              {"id": "3:4", "name": "ReadOnlyField", "type": "INSTANCE", "componentId": "C:readonly-field",
+               "absoluteBoundingBox": {"x": 2984, "y": 228, "width": 912, "height": 64},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Author"}, "Sample": {"type": "TEXT", "value": "Alice Sharma"}}},
+              {"id": "3:5", "name": "TextArea", "type": "INSTANCE", "componentId": "C:text-area",
+               "absoluteBoundingBox": {"x": 2984, "y": 304, "width": 912, "height": 220},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Content"}}},
+              {"id": "3:6", "name": "TextInput", "type": "INSTANCE", "componentId": "C:text-input",
+               "absoluteBoundingBox": {"x": 2984, "y": 536, "width": 912, "height": 64},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Tags"}, "Placeholder": {"type": "TEXT", "value": "comma, separated"}}},
+              {"id": "3:7", "name": "Button", "type": "INSTANCE", "componentId": "C:button",
+               "absoluteBoundingBox": {"x": 2984, "y": 620, "width": 96, "height": 38},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Publish"}, "Variant": {"type": "VARIANT", "value": "Primary"}},
+               "interactions": [{"trigger": {"type": "ON_CLICK"}, "actions": [{"type": "NODE", "destinationId": "2:1", "navigation": "NAVIGATE"}]}]},
+              {"id": "3:8", "name": "ErrorText", "type": "INSTANCE", "componentId": "C:error-text",
+               "absoluteBoundingBox": {"x": 2984, "y": 140, "width": 300, "height": 20},
+               "componentProperties": {"Label": {"type": "TEXT", "value": "Title is required"}, "State": {"type": "VARIANT", "value": "Conditional"}}}
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "components": {
+    "C:heading": {"key": "heading", "name": "Heading", "description": "Page title"},
+    "C:text": {"key": "text", "name": "Text", "description": "Static text"},
+    "C:text-input": {"key": "text-input", "name": "TextInput", "description": "Single-line text input with label"},
+    "C:password-input": {"key": "password-input", "name": "PasswordInput", "description": "Masked password input"},
+    "C:readonly-field": {"key": "readonly-field", "name": "ReadOnlyField", "description": "Labelled value the user cannot edit"},
+    "C:text-area": {"key": "text-area", "name": "TextArea", "description": "Multi-line plain text input"},
+    "C:button": {"key": "button", "name": "Button", "description": "Clickable action"},
+    "C:link": {"key": "link", "name": "Link", "description": "Text link action"},
+    "C:multi-select": {"key": "multi-select", "name": "MultiSelect", "description": "Dropdown that allows selecting several options"},
+    "C:table": {"key": "table", "name": "Table", "description": "Data table with column headers"},
+    "C:error-text": {"key": "error-text", "name": "ErrorText", "description": "Validation or error message"}
+  },
+  "x-frameRoutes": {
+    "Login": {"path": "/login", "requires_login": false},
+    "My Blogs": {"path": "/blogs", "requires_login": true},
+    "New Post": {"path": "/blogs/new", "requires_login": true}
+  },
+  "x-storyLinks": {
+    "BLOG-101": ["Login"],
+    "BLOG-102": ["My Blogs", "New Post"],
+    "BLOG-103": ["My Blogs"],
+    "BLOG-104": ["My Blogs"],
+    "BLOG-105": ["My Blogs", "Login"]
+  },
+  "x-approvedVariances": [
+    {
+      "frame": "New Post",
+      "node_id": "3:7",
+      "label": "Publish",
+      "allowed_labels": ["Save post", "Save"],
+      "reason": "PO approved 'Save post' copy on 2026-09-10"
+    },
+    {
+      "frame": "My Blogs",
+      "node_id": "2:4",
+      "label": "New post",
+      "allowed_kinds": ["link"],
+      "reason": "Primary action may render as a styled link"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "key": "BLOG-105",
+  "type": "Story",
+  "status": "Ready for QA",
+  "priority": "High",
+  "title": "Log out and protect pages",
+  "actor": "Logged-in blogger",
+  "description": "As a logged-in blogger, I want to log out and have my pages protected, so that nobody else on this computer can read my notes.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "Clicking 'Log out' ends the session and shows the Login page."
+    },
+    {
+      "id": "AC-02",
+      "text": "After logging out, opening '/blogs' directly redirects to the Login page."
+    },
+    {
+      "id": "AC-03",
+      "text": "The My Blogs page should load fast."
+    }
+  ],
+  "business_rules": ["BR-AUTH-03"],
+  "figma_frames": ["My Blogs", "Login"],
+  "labels": ["auth", "session"]
+}
