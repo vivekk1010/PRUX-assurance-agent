@@ -8,6 +8,7 @@ It reads the story and the Figma file (over MCP), grounds itself in engineering 
 
 - Product requirements: [docs/prd/001-stageui-requirement-assurance-agent.md](docs/prd/001-stageui-requirement-assurance-agent.md)
 - Architecture: [docs/architecture/architecture.md](docs/architecture/architecture.md)
+- Demo video: [DemoCapstoneProject.7z](DemoCapstoneProject.7z) (7-Zip archive with the recorded walkthrough, `DemoCapstoneProject.mp4`)
 
 ## Verdict labels
 

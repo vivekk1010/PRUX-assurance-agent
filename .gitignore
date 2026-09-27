@@ -18,3 +18,4 @@ evals/results/
 *.rar
 *.tar
 *.tar.gz
+!DemoCapstoneProject.7z
