@@ -7,6 +7,8 @@
 ```mermaid
 flowchart LR
     user([QA / PO / Designer / Dev]) -->|"python -m agent run --all"| cli[Agent CLI]
+    user -->|"python -m agent chat<br/>plain-English questions"| chat[Chat harness<br/>LLM tool calling]
+    chat --> cli
     mcpc([Cursor / MCP client]) -->|MCP tools| amcp[Assurance agent<br/>MCP server]
     amcp --> cli
     cli --> agent[Assurance Agent<br/>LangGraph orchestrator]
@@ -53,6 +55,7 @@ flowchart LR
 | UX intent | Frames, components with positions, flows, routes, approved variances, frame images | `mcp_servers/figma_mock/`, `agent/sources/figma_client.py` |
 | Engineering context | Business rules, UI/API contract, controlled test data, glossary | `knowledge_base/` |
 | RAG and intent model | Local vector store; expected-behavior record per story | `rag/`, `agent/intent_builder.py` |
+| Chat harness | Conversational front end: the LLM picks tools (list/show stories, show design, run conformance, run stories, read results, search knowledge, open report); answers cite tool results only | `agent/chat.py`, `llm/prompts/chat_system.md` |
 | Orchestrator | LangGraph state graph per story | `agent/orchestrator.py` |
 | Figma conformance | Per-frame design vs live verdict | `agent/conformance.py` |
 | Execution layer | Browser, read-only data, Figma compare tools | `agent/tools/` |
@@ -127,6 +130,7 @@ stateDiagram-v2
 
 | Node | LLM? | Why |
 |---|---|---|
+| Chat harness | Yes | Choose which checks to run for a question and explain the tool results |
 | build_intent | Yes | Normalize ACs into actor / precondition / action / expected; flag ambiguity |
 | generate_scenarios | Yes | Derive AC-tagged scenarios in a constrained step language |
 | execute_scenarios / recover | Yes, only on failure | Choose one allow-listed tool given a page snapshot |

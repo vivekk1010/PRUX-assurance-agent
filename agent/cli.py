@@ -169,10 +169,13 @@ def main(argv=None) -> int:
     p_conf = sub.add_parser("conformance", help="Figma conformance only: one verdict per design frame")
     p_conf.add_argument("--start-stage", action="store_true")
     p_conf.add_argument("--headed", action="store_true")
+    p_chat = sub.add_parser("chat", help="chat with the agent in plain English; it decides which checks to run")
+    p_chat.add_argument("--headed", action="store_true", help="show the browser during checks")
+    p_chat.add_argument("--once", action="append", metavar="QUESTION", help="ask one question and exit (repeatable)")
     args = parser.parse_args(argv)
 
     settings = get_settings()
-    if args.cmd in {"run", "conformance"} and not settings.stage_password:
+    if args.cmd in {"run", "conformance", "chat"} and not settings.stage_password:
         print("STAGE_PASSWORD is not set. Add it to .env (see .env.example).", file=sys.stderr)
         return 2
     if args.cmd == "ingest":
@@ -193,4 +196,10 @@ def main(argv=None) -> int:
         if args.headed:
             settings.headless = False
         return cmd_run(settings, [], reset=True, start_stage=args.start_stage, figma=True)
+    elif args.cmd == "chat":
+        from agent.chat import run_chat
+
+        if args.headed:
+            settings.headless = False
+        return run_chat(settings, args.once)
     return 0

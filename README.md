@@ -134,7 +134,7 @@ flowchart LR
 
 | Folder | Role | Key files |
 |---|---|---|
-| `agent/` | The agent: orchestration, conformance, validation, reporting, CLI | `cli.py`, `orchestrator.py`, `conformance.py`, `executor.py`, `classifier.py`, `guardrails.py` |
+| `agent/` | The agent: chat harness, orchestration, conformance, validation, reporting, CLI | `chat.py`, `cli.py`, `orchestrator.py`, `conformance.py`, `executor.py`, `classifier.py`, `guardrails.py` |
 | `agent/tools/` | Execution layer | `browser.py` (Playwright), `data.py` (read-only DB, 4-way calculation check), `figma_compare.py` |
 | `agent/sources/` | Intent inputs | `jira.py` (file-based Jira), `figma_client.py` (MCP client) |
 | `agent/reporting/` | Report generation | `report.py`, `templates/report.html.j2` |
@@ -170,10 +170,41 @@ Figma conformance only: `python -m agent conformance --start-stage`.
 Watch the browser: add `--headed`.
 Run the Stage app by itself: `python -m stage_app.seed` then `python -m stage_app`, open http://127.0.0.1:5055 (user `alice`, password from `.env`).
 
+## Chat with the agent
+
+`python -m agent chat` opens a conversation in the terminal. You ask in plain English; the LLM decides which checks to run (Figma conformance, one or more stories, or just reading earlier results) and explains the verdicts with evidence paths. Verdicts still come from the deterministic checks, never from the LLM. It needs an LLM key.
+
+```text
+PS> python -m agent chat --headed
+PR-UX Assurance Agent · openai (gpt-4o-mini) · 5 stories: BLOG-101, BLOG-102, BLOG-103, BLOG-104, BLOG-105
+
+you> Is the tag filter implemented as designed?
+  · list_stories()
+  · run_story_assurance(story_keys=['BLOG-104'])
+agent> GAP: The tag filter does not allow multiple selections as required by the design.
+- AC-01: The control is single-select; cannot select multiple tags like ['ai', 'travel'].
+  - Evidence files:
+    - C:\...\runs\20260927-202614\BLOG-104\SC-104-02\trace.zip
+- AC-02: This acceptance criterion passed successfully.
+```
+
+| You can ask | What the agent does |
+|---|---|
+| "What stories can you test?" | Lists stories and acceptance criteria |
+| "Does the app match the Figma design?" | Runs Figma conformance; verdict per screen with design, live and trace paths |
+| "Test BLOG-103 and explain any failure" | Runs that story; explains the DEFECT with UI, API and expected values |
+| "Is the tag filter implemented as designed?" | Finds the matching story and runs it |
+| "What does the reading time rule say?" | Searches the knowledge base, no browser |
+| "What should block sign-off?" | Summarises verdicts from this session's runs |
+| "Open the report" | Opens `report.html` of the latest run |
+
+In-chat commands: `/headed` (show or hide the browser), `/usage` (tokens so far), `/help`, `/exit`. One-shot mode for scripts: `python -m agent chat --once "Does the app match the Figma design?"`.
+
 ## Commands
 
 | Command | What it does |
 |---|---|
+| `python -m agent chat` | Chat in plain English; the agent picks and runs the checks |
 | `python -m agent run --all` | Figma conformance for every frame, then assure every story |
 | `python -m agent run --story BLOG-103` | Figma conformance, then assure one story (repeat `--story` for more) |
 | `python -m agent run --all --no-figma` | Stories only, skip frame conformance |
