@@ -1,7 +1,7 @@
 [project]
 name = "PR-UX-assurance-agent"
 version = "0.1.0"
-description = "Agentic Stage Requirement & UX Assurance"
+description = "Agentic StageUI Requirement & UX Assurance"
 authors = [{ name = "Vivek Kaushik" }]
 requires-python = ">=3.10"
 

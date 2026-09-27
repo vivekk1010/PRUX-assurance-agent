@@ -34,7 +34,7 @@ def _run_cli(*args: str) -> str | dict:
 
 @mcp.tool()
 def check_figma_conformance() -> dict:
-    """Compare every Figma frame with the live Stage screen. Returns a verdict per frame with reasons and evidence."""
+    """Compare every Figma frame with the live StageUI screen. Returns a verdict per frame with reasons and evidence."""
     s = get_settings()
     run_id = _run_cli("conformance")
     if isinstance(run_id, dict):
@@ -52,7 +52,7 @@ def check_figma_conformance() -> dict:
 
 @mcp.tool()
 def run_assurance(story_key: str) -> dict:
-    """Run the full assurance loop for one story against Stage and return per-AC labels with rationale."""
+    """Run the full assurance loop for one story against StageUI and return per-AC labels with rationale."""
     s = get_settings()
     run_id = _run_cli("run", "--story", story_key, "--no-figma")
     if isinstance(run_id, dict):

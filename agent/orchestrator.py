@@ -78,7 +78,7 @@ class AssuranceAgent:
     def reset_stage_data(self, st: AssuranceState) -> dict:
         if self.reset_stage:
             subprocess.run([sys.executable, "-m", self.s.stage_reset_module], cwd=ROOT, check=True, capture_output=True)
-            self.log("  • Stage data reset to controlled seed")
+            self.log("  • StageUI data reset to controlled seed")
         return {"notes": []}
 
     def load_story(self, st: AssuranceState) -> dict:

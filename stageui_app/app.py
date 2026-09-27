@@ -1,4 +1,4 @@
-"""Blog Notes: reference Stage application.
+"""Blog Notes: reference StageUI application.
 
 Known issues seeded in this build (expected findings, see PRD-001 §11):
   1. reading_time_min uses floor instead of ceil          -> BLOG-103 AC-03 DEFECT
@@ -13,7 +13,7 @@ from functools import wraps
 from flask import Flask, g, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
-from stage_app.db import connect
+from stageui_app.db import connect
 
 
 def word_count(content: str) -> int:

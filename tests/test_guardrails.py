@@ -12,7 +12,7 @@ def test_destructive_click_is_refused():
 
 
 def test_navigation_outside_stage_is_refused():
-    assert "outside Stage" in check_step(Step(action="goto", path="https://prod.example.com/blogs"), BASE)
+    assert "outside StageUI" in check_step(Step(action="goto", path="https://prod.example.com/blogs"), BASE)
     assert check_step(Step(action="goto", path="/admin/reset"), BASE)
 
 

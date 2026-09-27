@@ -1,4 +1,4 @@
-# Blog Notes: Stage API and UI Contract (Engineering Context)
+# Blog Notes: StageUI API and UI Contract (Engineering Context)
 
 Base URL: `STAGE_BASE_URL` (default `http://127.0.0.1:5055`). All `/api/*` endpoints require a session cookie.
 
@@ -48,7 +48,7 @@ Returns the logged-in user's posts, newest first.
 
 ## Data store (read-only for the agent)
 
-SQLite file `stage_app/instance/blog.db`.
+SQLite file `stageui_app/instance/blog.db`.
 
 | Table | Columns |
 |---|---|

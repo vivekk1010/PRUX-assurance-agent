@@ -21,7 +21,7 @@ TOOLS = [
     {"name": "show_figma_design", "description": "Figma design from the Figma MCP server: frames, components, routes, "
                                                  "prototype flows and approved variances. Does not open a browser.",
      "parameters": {"type": "object", "properties": {"frame": {"type": "string", "description": "optional frame name, e.g. 'My Blogs'"}}}},
-    {"name": "check_figma_conformance", "description": "Open every Figma frame's route on Stage in a browser and compare "
+    {"name": "check_figma_conformance", "description": "Open every Figma frame's route on StageUI in a browser and compare "
                                                        "components and prototype flows with the design. Returns a verdict per frame with evidence.",
      "parameters": {"type": "object", "properties": {}}},
     {"name": "run_story_assurance", "description": "Run the full assurance loop (plan scenarios, drive the browser, check UI/API/DB/"
@@ -159,7 +159,7 @@ class ChatHarness:
         if not self._stage_up:
             self._stage_up = self._stage.enter_context(stage_session(self.s, start_stage=True))
             if not self._stage_up:
-                return {"error": f"Stage app not reachable at {self.s.stage_base_url}"}
+                return {"error": f"StageUI app not reachable at {self.s.stage_base_url}"}
         run_dir, _, _ = run_stories(self.s, stories, reset=True, figma=figma, log=lambda m: self.log(f"    {m.strip()}") if m.strip() else None)
         return summarize(run_dir)
 

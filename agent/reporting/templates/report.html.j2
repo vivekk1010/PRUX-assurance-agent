@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Stage Assurance Report · {{ meta.run_id }}</title>
+<title>StageUI Assurance Report · {{ meta.run_id }}</title>
 <style>
   body { font-family: system-ui, sans-serif; margin: 24px; color: #1d2330; background: #f7f8fa; }
   h1 { margin-bottom: 4px; }
@@ -31,9 +31,9 @@
 </style>
 </head>
 <body>
-<h1>Stage Requirement &amp; UX Assurance Report</h1>
+<h1>StageUI Requirement &amp; UX Assurance Report</h1>
 <div class="muted">
-  Run {{ meta.run_id }} · generated {{ generated }} · Author {{ meta.author }} · Stage {{ meta.stage_base_url }} · LLM {{ meta.llm_provider }} ({{ meta.llm_model }})
+  Run {{ meta.run_id }} · generated {{ generated }} · Author {{ meta.author }} · StageUI {{ meta.stage_base_url }} · LLM {{ meta.llm_provider }} ({{ meta.llm_model }})
   · UX source {{ meta.ux_source }} · RAG {{ meta.embedder }}
 </div>
 
@@ -79,7 +79,7 @@
       </div>
     </figure>
     <figure>
-      <figcaption>Implemented screen (Stage <code>{{ f.route }}</code>)</figcaption>
+      <figcaption>Implemented screen (StageUI <code>{{ f.route }}</code>)</figcaption>
       <div class="shot"><img src="{{ f.live_image }}" alt="Live screen for {{ f.frame }}"></div>
     </figure>
   </div>
@@ -197,6 +197,6 @@
   {% endfor %}
 </div>
 {% endfor %}
-<p class="muted">Stage Requirement &amp; UX Assurance · Vivek Kaushik</p>
+<p class="muted">StageUI Requirement &amp; UX Assurance · Vivek Kaushik</p>
 </body>
 </html>

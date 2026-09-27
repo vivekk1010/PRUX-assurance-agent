@@ -1,5 +1,5 @@
 {
-  "_note": "Human-assigned expected labels for the seeded Stage build (PRD-001 §11).",
+  "_note": "Human-assigned expected labels for the seeded StageUI build (PRD-001 §11).",
   "stories": {
     "BLOG-101": {"AC-01": "PASS", "AC-02": "PASS", "AC-03": "PASS"},
     "BLOG-102": {"AC-01": "PASS", "AC-02": "PASS", "AC-03": "PASS", "AC-04": "PASS"},

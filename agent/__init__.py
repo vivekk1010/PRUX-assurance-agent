@@ -1,1 +1,1 @@
-"""Stage Requirement & UX Assurance Agent."""
+"""StageUI Requirement & UX Assurance Agent."""

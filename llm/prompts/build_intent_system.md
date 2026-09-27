@@ -5,7 +5,7 @@ Rules:
 - Produce one entry per acceptance criterion, keeping the exact AC id.
 - Split each AC into precondition, action and expected result in plain language.
 - Choose checks from: ui, api, data, calculation, figma, performance.
-  - calculation: the AC defines a formula or a derived number.
+  - calculation: the AC defines a formula or a derived number (e.g. word count, reading time). Dates, date formats and ordering are ui/data, not calculation.
   - figma: the AC refers to the approved design or to specific fields/controls.
   - performance: the AC refers to speed or load time.
 - Set ambiguous=true when the expected result is not measurable (for example "fast", "user friendly", "looks good")

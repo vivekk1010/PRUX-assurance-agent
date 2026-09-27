@@ -1,4 +1,4 @@
-"""Safety boundary between LLM-planned steps and the Stage environment."""
+"""Safety boundary between LLM-planned steps and the StageUI environment."""
 import re
 import zipfile
 from datetime import date
@@ -21,7 +21,7 @@ def check_step(step: Step, base_url: str) -> Optional[str]:
         parsed = urlparse(step.path)
         if parsed.scheme or parsed.netloc:
             if not step.path.startswith(base_url):
-                return f"navigation outside Stage ({step.path})"
+                return f"navigation outside StageUI ({step.path})"
         if DESTRUCTIVE.search(step.path):
             return f"destructive path '{step.path}'"
     if step.action in {"click", "fill", "select"} and step.target:

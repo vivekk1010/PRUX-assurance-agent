@@ -261,6 +261,9 @@ class BrowserSession:
 
     def _do_expect_rows(self, step: Step):
         expected = set(step.values or [])
+        if not self.page.url.split("?")[0].rstrip("/").endswith("/blogs"):
+            self.page.goto("/blogs")
+            self._settle()
         titles = self.page.get_by_test_id("post-title")
         ok = self._poll(lambda: set(titles.all_inner_texts()) == expected)
         actual = titles.all_inner_texts()

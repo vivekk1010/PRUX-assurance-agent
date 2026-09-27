@@ -1,6 +1,6 @@
 # Blog Notes: Controlled Test Data
 
-The Stage database is reset to this seed before each assurance run (`python -m stage_app.seed`).
+The StageUI database is reset to this seed before each assurance run (`python -m stageui_app.seed`).
 
 ## Users
 
@@ -16,6 +16,7 @@ After login the header shows `Welcome, Alice Sharma` and the Author field shows 
 ## Alice's seeded posts (what the primary test user sees, newest first)
 
 The primary test user sees exactly these three posts and never sees Bob's posts.
+"Expected reading time" is the value the business rule requires, not necessarily what the UI shows; verify it only with `check_calculation`.
 
 | Title | Published | Tags | Words | Expected reading time |
 |---|---|---|---|---|

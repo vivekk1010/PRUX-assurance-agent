@@ -1,6 +1,6 @@
 """Figma conformance: one verdict per design frame, independent of stories.
 
-For each frame: open its Stage route -> compare every component -> click each prototype flow and check the
+For each frame: open its StageUI route -> compare every component -> click each prototype flow and check the
 destination -> capture design and live screenshots -> optional vision review (advisory, never changes the label).
 """
 import json

@@ -1,6 +1,6 @@
-# Architecture: Stage Requirement & UX Assurance Agent
+# Architecture: StageUI Requirement & UX Assurance Agent
 
-**Author:** Vivek Kaushik · Implements [PRD-001](../prd/001-stage-requirement-assurance-agent.md).
+**Author:** Vivek Kaushik · Implements [PRD-001](../prd/001-stageui-requirement-assurance-agent.md).
 
 ## 1. System context
 
@@ -37,8 +37,8 @@ flowchart LR
 
     agent -->|allow-listed actions| pw[Playwright browser]
     conf -->|screenshots, flow clicks| pw
-    agent -->|read-only SQL| db[(Stage DB)]
-    pw --> stage[Stage app: Blog Notes]
+    agent -->|read-only SQL| db[(StageUI DB)]
+    pw --> stage[StageUI app: Blog Notes]
     stage --> db
 
     agent --> evidence[(runs/&lt;run-id&gt;/<br/>design vs live, traces,<br/>network, data)]
@@ -70,7 +70,7 @@ flowchart TD
     A[Figma MCP: list_frames, get_frame_components,<br/>get_frame_routes, get_frame_image] --> B{Route requires login?}
     B -- yes --> C[Log in with placeholders]
     B -- no --> D
-    C --> D[Open frame route on Stage<br/>1280x800 viewport]
+    C --> D[Open frame route on StageUI<br/>1280x800 viewport]
     D --> E[live.png]
     D --> F[Compare every component:<br/>kind, label, read-only, columns]
     F --> G[Click each prototype flow trigger<br/>fill prerequisites from test data]
@@ -149,7 +149,7 @@ sequenceDiagram
     participant Figma as Figma MCP
     participant LLM
     participant PW as Playwright
-    participant DB as Stage DB
+    participant DB as StageUI DB
 
     QA->>CLI: python -m agent run --story BLOG-103
     CLI->>Orch: run(story)
@@ -173,13 +173,13 @@ sequenceDiagram
 PR-UX-assurance-agent/
 ├── README.md
 ├── docs/
-│   ├── prd/001-stage-requirement-assurance-agent.md   # WHAT and WHY
+│   ├── prd/001-stageui-requirement-assurance-agent.md   # WHAT and WHY
 │   └── architecture/architecture.md                   # HOW (this file)
 │
 ├── stories/                 # Product intent: Jira stories (BLOG-101..105)
 ├── knowledge_base/          # Engineering context: rules, UI/API contract, test data, flow test data
 │
-├── stage_app/               # Stage application under test (Flask + SQLite)
+├── stageui_app/               # StageUI application under test (Flask + SQLite)
 │   ├── app.py               #   routes and JSON API
 │   ├── db.py / seed.py      #   schema + deterministic seed
 │   └── templates/, static/
@@ -256,7 +256,7 @@ Targets: `{"role": "button", "name": "Log in"}`, `{"label": "Username"}`, `{"tex
 | `get_prototype_flows()` | from frame, trigger label, to frame |
 | `get_approved_variances()` | component, allowed labels or kinds, reason |
 | `get_story_frames(story_key)` | frames linked to a Jira key |
-| `get_frame_routes()` | Stage route per frame and whether login is required |
+| `get_frame_routes()` | StageUI route per frame and whether login is required |
 | `get_frame_image(frame)` | local PNG path and size (fixture or `GET /v1/images/:key`) |
 
 Source switch: `FIGMA_SOURCE=fixture` (default) or `FIGMA_SOURCE=rest` with `FIGMA_TOKEN` + `FIGMA_FILE_KEY`. The fixture uses the same JSON shape as `GET /v1/files/:key`, so one parser serves both.

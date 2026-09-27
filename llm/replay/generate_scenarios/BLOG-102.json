@@ -45,7 +45,7 @@
         {"action": "click", "target": {"role": "button", "name": "Log in"}},
         {"action": "goto", "path": "/blogs/new"},
         {"action": "fill", "target": {"label": "Title"}, "value": "Assurance check post"},
-        {"action": "fill", "target": {"label": "Content"}, "value": "This post was written by the assurance agent during a Stage run."},
+        {"action": "fill", "target": {"label": "Content"}, "value": "This post was written by the assurance agent during a StageUI run."},
         {"action": "fill", "target": {"label": "Tags"}, "value": "release"},
         {"action": "click", "target": {"role": "button", "name": "Publish"}},
         {"action": "expect_url", "contains": "/blogs"},

@@ -1,4 +1,4 @@
-"""Reset the Stage database to the controlled seed in knowledge_base/test_data.md."""
+"""Reset the StageUI database to the controlled seed in knowledge_base/test_data.md."""
 import os
 import secrets
 from pathlib import Path
@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 
-from stage_app.db import DB_PATH, connect, init_schema
+from stageui_app.db import DB_PATH, connect, init_schema
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 

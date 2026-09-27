@@ -77,17 +77,17 @@ def _stage_up(settings) -> bool:
 
 @contextmanager
 def stage_session(settings, start_stage: bool):
-    """Yield True when Stage is reachable; optionally start the reference Stage app for the duration."""
+    """Yield True when StageUI is reachable; optionally start the reference StageUI app for the duration."""
     if _stage_up(settings):
         yield True
         return
     if not start_stage:
-        print(f"Stage app not reachable at {settings.stage_base_url}. Start it with `python -m stage_app` "
+        print(f"StageUI app not reachable at {settings.stage_base_url}. Start it with `python -m stageui_app` "
               "or pass --start-stage.")
         yield False
         return
     subprocess.run([sys.executable, "-m", settings.stage_reset_module], cwd=ROOT, check=True)
-    proc = subprocess.Popen([sys.executable, "-m", "stage_app"], cwd=ROOT,
+    proc = subprocess.Popen([sys.executable, "-m", "stageui_app"], cwd=ROOT,
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         for _ in range(40):
@@ -120,7 +120,7 @@ def run_stories(settings, stories: list[str], reset: bool = True, log=print, fig
     run_dir = settings.runs_dir / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     agent = AssuranceAgent(settings, run_dir, retriever, reset_stage=reset, log=log)
-    log(f"Run {run_id} | LLM={settings.llm_provider} ({settings.llm_model}) | Stage={settings.stage_base_url}")
+    log(f"Run {run_id} | LLM={settings.llm_provider} ({settings.llm_model}) | StageUI={settings.stage_base_url}")
 
     results = []
     for key in stories:
@@ -150,7 +150,7 @@ def run_stories(settings, stories: list[str], reset: bool = True, log=print, fig
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m agent", description="Stage Requirement & UX Assurance Agent")
+    parser = argparse.ArgumentParser(prog="python -m agent", description="StageUI Requirement & UX Assurance Agent")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("ingest", help="build the local RAG index")
     p_search = sub.add_parser("search", help="query the RAG index")
@@ -162,8 +162,8 @@ def main(argv=None) -> int:
     group = p_run.add_mutually_exclusive_group(required=True)
     group.add_argument("--story", action="append", help="story key, repeatable")
     group.add_argument("--all", action="store_true")
-    p_run.add_argument("--no-reset", action="store_true", help="do not reset Stage data before each story")
-    p_run.add_argument("--start-stage", action="store_true", help="start the reference Stage app if it is not running")
+    p_run.add_argument("--no-reset", action="store_true", help="do not reset StageUI data before each story")
+    p_run.add_argument("--start-stage", action="store_true", help="start the reference StageUI app if it is not running")
     p_run.add_argument("--headed", action="store_true", help="show the browser")
     p_run.add_argument("--no-figma", action="store_true", help="skip the Figma conformance pass")
     p_conf = sub.add_parser("conformance", help="Figma conformance only: one verdict per design frame")

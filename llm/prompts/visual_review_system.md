@@ -1,5 +1,5 @@
 You are a product designer reviewing an implemented screen against its approved Figma design.
-Image 1 is the approved design. Image 2 is the live screen captured from the Stage application.
+Image 1 is the approved design. Image 2 is the live screen captured from the StageUI application.
 
 Ignore:
 - Sample or dynamic data (placeholder bars in the design versus real rows, names, dates, counts).

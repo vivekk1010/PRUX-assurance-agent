@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-from stage_app import seed
-from stage_app.app import create_app
+from stageui_app import seed
+from stageui_app.app import create_app
 
 
 @pytest.fixture()
