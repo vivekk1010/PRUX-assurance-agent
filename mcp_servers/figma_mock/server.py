@@ -38,6 +38,7 @@ def _intent() -> dict:
         resp.raise_for_status()
         payload = resp.json()
         payload.setdefault("x-storyLinks", fixture.get("x-storyLinks", {}))
+        payload.setdefault("x-features", fixture.get("x-features", []))
         payload.setdefault("x-approvedVariances", fixture.get("x-approvedVariances", []))
         payload.setdefault("x-frameRoutes", fixture.get("x-frameRoutes", {}))
         return parse_file(payload)
@@ -85,6 +86,12 @@ def get_approved_variances() -> list[dict]:
 def get_story_frames(story_key: str) -> list[str]:
     """Frames linked to a Jira story key."""
     return _intent()["story_links"].get(story_key, [])
+
+
+@mcp.tool()
+def get_features() -> list[dict]:
+    """Stable product features linked to stories, acceptance criteria, frames and nodes."""
+    return _intent()["features"]
 
 
 @mcp.tool()

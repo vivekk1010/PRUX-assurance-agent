@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "mcp_servers": {
+    "local-example": {
+      "transport": "streamable-http",
+      "url": "http://127.0.0.1:9000/mcp"
+    }
+  },
+  "tools": [
+    {
+      "name": "echo",
+      "description": "Return validated input unchanged.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "enabled": true,
+      "surfaces": [
+        "chat",
+        "mcp",
+        "cli",
+        "test"
+      ],
+      "risk": "low",
+      "timeout": 2,
+      "capabilities": [],
+      "handler": {
+        "type": "builtin",
+        "name": "echo"
+      }
+    },
+    {
+      "name": "normalize_text",
+      "description": "Normalize whitespace in text without side effects.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "enabled": true,
+      "surfaces": [
+        "cli",
+        "test"
+      ],
+      "risk": "low",
+      "timeout": 2,
+      "capabilities": [
+        "text.normalize"
+      ],
+      "handler": {
+        "type": "python",
+        "import_path": "agent.plugins.sample:normalize_text"
+      }
+    },
+    {
+      "name": "example_mcp_lookup",
+      "description": "Example MCP descriptor; disabled until explicitly configured.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "enabled": false,
+      "surfaces": [
+        "cli"
+      ],
+      "risk": "medium",
+      "timeout": 5,
+      "capabilities": [
+        "mcp.read"
+      ],
+      "handler": {
+        "type": "mcp",
+        "server": "local-example",
+        "tool": "lookup"
+      }
+    }
+  ]
+}

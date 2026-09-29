@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>StageUI Assurance Report · {{ meta.run_id }}</title>
+<title>PR-UX Assurance Report · {{ meta.run_id }}</title>
 <style>
   body { font-family: system-ui, sans-serif; margin: 24px; color: #1d2330; background: #f7f8fa; }
   h1 { margin-bottom: 4px; }
@@ -31,11 +31,26 @@
 </style>
 </head>
 <body>
-<h1>StageUI Requirement &amp; UX Assurance Report</h1>
+<h1>Requirement &amp; UX Assurance Report</h1>
 <div class="muted">
-  Run {{ meta.run_id }} · generated {{ generated }} · Author {{ meta.author }} · StageUI {{ meta.stage_base_url }} · LLM {{ meta.llm_provider }} ({{ meta.llm_model }})
+  Run {{ meta.run_id }} · generated {{ generated }} · Author {{ meta.author }} · Target {{ meta.stage_base_url }} · LLM {{ meta.llm_provider }} ({{ meta.llm_model }})
   · UX source {{ meta.ux_source }} · RAG {{ meta.embedder }}
 </div>
+
+{% if evaluation %}
+<div class="card">
+  <h2>Run artifact evaluation</h2>
+  <p><span class="label {{ 'PASS' if evaluation.passed else 'DEFECT' }}">{{ 'PASS' if evaluation.passed else 'FAIL' }}</span>
+    {{ evaluation.summary.passed }}/{{ evaluation.summary.checks }} checks passed.</p>
+  <table>
+    <tr><th>Check</th><th>Result</th></tr>
+    {% for name, check in evaluation.checks.items() %}
+    <tr><td>{{ name }}</td><td class="{{ 'ok' if check.passed else 'error' }}">{{ 'pass' if check.passed else 'fail' }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="muted">Full details: <a href="eval.json">eval.json</a>. This deterministic audit does not change requirement verdicts.</p>
+</div>
+{% endif %}
 
 {% if frames %}
 <div class="card">
@@ -79,7 +94,7 @@
       </div>
     </figure>
     <figure>
-      <figcaption>Implemented screen (StageUI <code>{{ f.route }}</code>)</figcaption>
+      <figcaption>Implemented screen (<code>{{ f.route }}</code>)</figcaption>
       <div class="shot"><img src="{{ f.live_image }}" alt="Live screen for {{ f.frame }}"></div>
     </figure>
   </div>

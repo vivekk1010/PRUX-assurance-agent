@@ -15,9 +15,23 @@ def _is_calculation_ac(intent: IntentModel, ac_ids: list[str], term: str) -> boo
 
 
 def generate_scenarios(intent: IntentModel, ux: UXIntent, retriever: Retriever, llm: LLM) -> tuple[ScenarioPlan, list[str]]:
-    hits = retriever.search("UI contract data-testid pages API", k=2, source_prefix="knowledge_base/api_contract")
-    hits += retriever.search("controlled test data users seeded posts tags filter expectations", k=10,
-                             source_prefix="knowledge_base/test_data")
+    hits, seen = [], set()
+    for ac in intent.acs:
+        doc_types = {"business_rule", "test_data", "glossary"}
+        if set(ac.checks) & {"api", "data", "calculation"}:
+            doc_types.add("api_contract")
+        if "figma" in ac.checks:
+            doc_types.update({"figma_frame", "figma_variance"})
+        for hit in retriever.search(
+            f"{intent.story_key} {ac.id} {ac.text} {' '.join(ac.checks)}",
+            k=5,
+            filters={"doc_types": doc_types},
+        ):
+            if hit.chunk.id not in seen:
+                seen.add(hit.chunk.id)
+                hits.append(hit)
+    if not hits:
+        hits = retriever.search("UI contract controlled test data", k=8, source_prefix="knowledge_base")
     notes: list[str] = []
     try:
         plan = llm.structured(

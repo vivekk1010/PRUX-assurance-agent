@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from agent.guardrails import mask_secrets
+from agent.adapters import get_adapter
 from agent.sources.jira import list_story_keys, load_story
 
 MAX_TOOL_ROUNDS = 8
@@ -58,6 +59,44 @@ class ChatHarness:
         self._stage_up = False
         self._ux = None
         self._turn = 0
+        self.registry = self._build_registry()
+        self.tool_capabilities = {
+            value.strip() for value in os.getenv("AGENT_TOOL_CAPABILITIES", "").split(",") if value.strip()
+        }
+
+    def _build_registry(self):
+        from agent.config import ROOT
+        from agent.mcp_tool_client import invoke_mcp
+        from agent.tool_registry import RegistryConfig, ToolRegistry
+
+        configured_path = Path(os.getenv("AGENT_TOOLS_CONFIG", ROOT / "config" / "tools.json"))
+        configured = (
+            json.loads(configured_path.read_text(encoding="utf-8"))
+            if configured_path.is_file()
+            else {"version": 1, "mcp_servers": {}, "tools": []}
+        )
+        builtins = []
+        handlers = {}
+        for tool in TOOLS:
+            name = tool["name"]
+            builtins.append({
+                "name": name,
+                "description": tool["description"],
+                "input_schema": tool["parameters"],
+                "enabled": True,
+                "surfaces": ["chat"],
+                "risk": "medium" if name in {"check_figma_conformance", "run_story_assurance"} else "low",
+                "timeout": 300,
+                "capabilities": [],
+                "handler": {"type": "builtin", "name": name},
+            })
+            handlers[name] = lambda arguments, n=name: getattr(self, f"_tool_{n}")(**arguments)
+        config = RegistryConfig.model_validate({
+            "version": 1,
+            "mcp_servers": configured.get("mcp_servers", {}),
+            "tools": builtins + configured.get("tools", []),
+        })
+        return ToolRegistry(config, builtin_handlers=handlers, mcp_handler=invoke_mcp)
 
     def close(self) -> None:
         self._stage.close()
@@ -67,8 +106,11 @@ class ChatHarness:
         self._turn += 1
         self.messages.append({"role": "user", "content": text})
         for round_no in range(MAX_TOOL_ROUNDS):
+            available = self.registry.authorized_tools(
+                surface="chat", capabilities=self.tool_capabilities, max_risk="medium"
+            )
             msg = self.llm._chat("chat", f"turn-{self._turn}-{round_no}", self.messages,
-                                 tools=[{"type": "function", "function": t} for t in TOOLS])
+                                 tools=[self.registry.llm_schema(tool) for tool in available])
             if not msg.tool_calls:
                 answer = msg.content or ""
                 self.messages.append({"role": "assistant", "content": answer})
@@ -83,14 +125,13 @@ class ChatHarness:
         return "Stopped after too many tool calls. Try a narrower question."
 
     def call_tool(self, name: str, args: dict) -> str:
-        handler = getattr(self, f"_tool_{name}", None)
-        if handler is None:
-            return json.dumps({"error": f"unknown tool {name}"})
         try:
-            result = handler(**args)
+            result = self.registry.invoke(
+                name, args, surface="chat", capabilities=self.tool_capabilities, max_risk="medium"
+            )
         except Exception as exc:
             result = {"error": f"{type(exc).__name__}: {exc}"}
-        return mask_secrets(json.dumps(result, default=str), [self.s.stage_password])
+        return mask_secrets(json.dumps(result, default=str), get_adapter(self.s).secrets())
 
     # ---------- tools ----------
     def _tool_list_stories(self) -> list[dict]:

@@ -5,6 +5,8 @@
 import json
 import subprocess
 import sys
+import os
+from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
@@ -24,8 +26,11 @@ def list_stories() -> list[dict]:
     ]
 
 
-def _run_cli(*args: str) -> str | dict:
-    proc = subprocess.run([sys.executable, "-m", "agent", *args, "--start-stage"],
+def _run_cli(*args: str, start_stage: bool = True) -> str | dict:
+    command = [sys.executable, "-m", "agent", *args]
+    if start_stage:
+        command.append("--start-stage")
+    proc = subprocess.run(command,
                           cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if proc.returncode != 0:
         return {"error": proc.stderr[-2000:] or proc.stdout[-2000:]}
@@ -65,6 +70,79 @@ def run_assurance(story_key: str) -> dict:
         "recommendation": result["recommendation"],
         "report": str(s.runs_dir / run_id / "report.html"),
     }
+
+
+@mcp.tool()
+def generate_test_cases(story_key: str, excel: bool = True) -> dict:
+    """Generate a versioned draft plan without executing a browser."""
+    args = ["generate", "--story", story_key]
+    if excel:
+        args.append("--excel")
+    result = _run_cli(*args, start_stage=False)
+    if isinstance(result, dict):
+        return result
+    s = get_settings()
+    latest = s.test_plans_dir / story_key.upper() / "LATEST"
+    if not latest.exists():
+        return {"error": "plan generation did not create a catalog entry"}
+    version = latest.read_text(encoding="utf-8").strip()
+    return {
+        "story": story_key.upper(), "version": int(version),
+        "plan": str(s.test_plans_dir / story_key.upper() / f"v{version}.json"),
+        "workbook": str(s.test_plans_dir / story_key.upper() / f"v{version}.xlsx") if excel else None,
+    }
+
+
+@mcp.tool()
+def import_human_review(story_key: str, workbook: str, version: int | None = None) -> dict:
+    """Validate and import approval fields and edited steps from an .xlsx workbook."""
+    args = ["review", "import", "--story", story_key, "--file", workbook]
+    if version is not None:
+        args += ["--version", str(version)]
+    result = _run_cli(*args, start_stage=False)
+    return result if isinstance(result, dict) else {"story": story_key.upper(), "imported": True}
+
+
+@mcp.tool()
+def run_approved_tests(story: str | None = None, frame: str | None = None, feature: str | None = None) -> dict:
+    """Execute approved test cases selected by exactly one story, Figma frame, or feature."""
+    selected = [("--story", story), ("--frame", frame), ("--feature", feature)]
+    selected = [(flag, value) for flag, value in selected if value]
+    if len(selected) != 1:
+        return {"error": "provide exactly one of story, frame, or feature"}
+    run_id = _run_cli("run-approved", selected[0][0], selected[0][1])
+    if isinstance(run_id, dict):
+        return run_id
+    return {"run_id": run_id, "report": str(get_settings().runs_dir / run_id / "report.html")}
+
+
+def _configured_registry():
+    from agent.mcp_tool_client import invoke_mcp
+    from agent.tool_registry import ToolRegistry
+
+    path = Path(os.getenv("AGENT_TOOLS_CONFIG", ROOT / "config" / "tools.json"))
+    return ToolRegistry.from_file(path, mcp_handler=invoke_mcp)
+
+
+@mcp.tool()
+def list_configured_tools() -> list[dict]:
+    """List enabled low-risk tools explicitly exposed to the MCP surface."""
+    capabilities = {v.strip() for v in os.getenv("AGENT_TOOL_CAPABILITIES", "").split(",") if v.strip()}
+    return [
+        {"name": tool.name, "description": tool.description, "schema": tool.input_schema}
+        for tool in _configured_registry().authorized_tools(
+            surface="mcp", capabilities=capabilities, max_risk="low"
+        )
+    ]
+
+
+@mcp.tool()
+def invoke_configured_tool(name: str, arguments: dict) -> object:
+    """Invoke one configured MCP-surface tool after schema and risk authorization."""
+    capabilities = {v.strip() for v in os.getenv("AGENT_TOOL_CAPABILITIES", "").split(",") if v.strip()}
+    return _configured_registry().invoke(
+        name, arguments, surface="mcp", capabilities=capabilities, max_risk="low"
+    )
 
 
 if __name__ == "__main__":

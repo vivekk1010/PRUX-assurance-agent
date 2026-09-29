@@ -89,5 +89,6 @@ def parse_file(payload: dict) -> dict:
         "flows": flows,
         "frame_routes": payload.get("x-frameRoutes", {}),
         "story_links": payload.get("x-storyLinks", {}),
+        "features": payload.get("x-features", []),
         "approved_variances": payload.get("x-approvedVariances", []),
     }

@@ -205,6 +205,12 @@ In-chat commands: `/headed` (show or hide the browser), `/usage` (tokens so far)
 
 | Command | What it does |
 |---|---|
+| `python -m agent generate --story BLOG-104 --excel` | Generate a versioned draft test plan and human-review workbook without opening the target app |
+| `python -m agent review import --story BLOG-104 --file test_plans/BLOG-104/v1.xlsx` | Validate reviewed steps and import approvals into the canonical JSON plan |
+| `python -m agent plans [--story BLOG-104]` | List plan versions and review status counts |
+| `python -m agent run-approved --story BLOG-104 --start-stage` | Execute only approved cases for a story |
+| `python -m agent run-approved --frame "My Blogs"` | Execute approved cases linked to a Figma frame |
+| `python -m agent run-approved --feature tag-filter` | Execute approved cases linked to a stable product feature |
 | `python -m agent chat` | Chat in plain English; the agent picks and runs the checks |
 | `python -m agent run --all` | Figma conformance for every frame, then assure every story |
 | `python -m agent run --story BLOG-103` | Figma conformance, then assure one story (repeat `--story` for more) |
@@ -216,6 +222,44 @@ In-chat commands: `/headed` (show or hide the browser), `/usage` (tokens so far)
 | `python -m agent graph` | Print the orchestrator graph as Mermaid |
 | `python -m evals.run_eval --runs 3 --start-stage` | Label accuracy, frame accuracy, flake, evidence, latency, cost vs gold labels |
 | `python -m pytest` | Tests |
+
+## Governed test-plan workflow
+
+The recommended workflow separates test design from execution:
+
+1. `generate` grounds each acceptance criterion in Jira, Figma and hybrid RAG context and writes an immutable plan version under `test_plans/<story>/`.
+2. The `.xlsx` projection contains Summary, Test Cases, Steps, Coverage, Sources and Human Review sheets. Reviewers may approve/reject cases and edit steps.
+3. `review import` validates all edits against the constrained step schema, known ACs, target-origin guardrails, secret rules and spreadsheet-injection controls.
+4. `run-approved` refuses draft cases and stale source versions, then selects approved cases by story, Figma frame or feature.
+5. The workbook receives Results and Evaluation sheets after execution. JSON remains the canonical executable format.
+
+Every run now finishes with a deterministic artifact audit in `eval.json`. It checks selected-case coverage, AC classification, evidence files, label consistency, report integrity and secret leakage. A failed audit returns exit code 3; it never changes PASS/GAP/DEFECT/RISK verdicts.
+
+## Pointing at another web application
+
+Playwright is framework-independent, so the generic adapter can test React, Angular, Vue and server-rendered sites. Copy `config/apps/generic.example.json`, then set:
+
+```dotenv
+TARGET_ADAPTER=generic_web
+TARGET_PROFILE=config/apps/my-app.json
+TARGET_BASE_URL=https://stage.example.com
+TARGET_ALLOWED_ORIGINS=https://stage.example.com
+TARGET_AUTH_METHOD=form
+TARGET_USER=qa-user
+TARGET_PASSWORD=...
+```
+
+Authentication modes are `form`, `storage_state`, `headers`, and `none`. Use a gitignored Playwright storage-state file for SSO/MFA; never place credentials in stories, prompts, plans or Excel. Generic targets do not start or reset automatically, and unsupported DB/calculation probes become RISK instead of silently using StageUI behavior. The legacy `STAGE_*` variables remain supported.
+
+## Configurable agent tools
+
+`config/tools.json` is the shared registry for chat, recovery and MCP-facing tools. A tool declares its JSON input schema, enabled surfaces, risk, timeout, required capabilities and one handler:
+
+- `builtin`: a registered in-process handler
+- `python`: an allow-listed `module:function` plugin
+- `mcp`: a tool on a configured stdio, SSE or streamable-HTTP MCP server
+
+Disabled, over-risk or missing-capability tools are not shown to the model and cannot be invoked. Set `AGENT_TOOLS_CONFIG` to use another registry and `AGENT_TOOL_CAPABILITIES` to grant comma-separated capabilities.
 
 Common flags: `--start-stage` starts the StageUI app for the run, `--no-reset` skips the data reset, `--headed` shows the browser.
 
@@ -255,10 +299,11 @@ Agent tools: `list_stories`, `check_figma_conformance` (per-frame verdicts and r
 
 ## Local RAG
 
-- Sources: `stories/` (one chunk per story and per AC), `knowledge_base/*.md` (one chunk per heading), Figma frames and approved variances.
+- Sources: `stories/` (one chunk per story and per AC), `knowledge_base/*` (heading and structured flow chunks), Figma frames, features and approved variances.
 - Embeddings: OpenAI `text-embedding-3-small` when a key is set, otherwise an offline hashing embedder.
-- Store: numpy matrix + JSON in `.rag_index/`, cosine search.
-- Every intent records `context_sources`, so you can see which rules grounded it.
+- Store: numpy matrix + JSON in `.rag_index/`; hybrid cosine + pure-Python BM25 retrieval with reciprocal-rank fusion and metadata filters.
+- Retrieval runs per AC, resolves exact business-rule IDs, records stable citations/conflicts and warns when the index manifest is stale.
+- `python -m evals.run_retrieval_eval` runs the offline retrieval gold set.
 
 ## Figma MCP
 

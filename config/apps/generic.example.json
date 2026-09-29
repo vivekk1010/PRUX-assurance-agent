@@ -1,0 +1,23 @@
+{
+  "health_path": "/",
+  "allowed_origins": ["https://stage.example.com"],
+  "auth": {
+    "login_path": "/login",
+    "username_label": "Email",
+    "password_label": "Password",
+    "submit_name": "Sign in"
+  },
+  "list_path": "/",
+  "row_title_testid": "row-title",
+  "capabilities": [],
+  "features": [
+    {
+      "id": "example-feature",
+      "name": "Example feature",
+      "frames": ["Example Frame"],
+      "node_ids": [],
+      "story_keys": ["WEB-1"],
+      "ac_ids": ["AC-1"]
+    }
+  ]
+}

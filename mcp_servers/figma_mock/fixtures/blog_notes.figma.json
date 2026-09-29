@@ -160,6 +160,13 @@
     "BLOG-104": ["My Blogs"],
     "BLOG-105": ["My Blogs", "Login"]
   },
+  "x-features": [
+    {"id": "login", "name": "Login", "frames": ["Login"], "node_ids": ["1:3", "1:4", "1:5"], "story_keys": ["BLOG-101"], "ac_ids": []},
+    {"id": "create-post", "name": "Create post", "frames": ["My Blogs", "New Post"], "node_ids": ["2:4", "3:7"], "story_keys": ["BLOG-102"], "ac_ids": []},
+    {"id": "post-metadata", "name": "Post metadata", "frames": ["My Blogs"], "node_ids": ["2:7"], "story_keys": ["BLOG-103"], "ac_ids": []},
+    {"id": "tag-filter", "name": "Tag filtering", "frames": ["My Blogs"], "node_ids": ["2:6"], "story_keys": ["BLOG-104"], "ac_ids": []},
+    {"id": "logout", "name": "Logout", "frames": ["My Blogs", "Login"], "node_ids": ["2:5"], "story_keys": ["BLOG-105"], "ac_ids": []}
+  ],
   "x-approvedVariances": [
     {
       "frame": "New Post",

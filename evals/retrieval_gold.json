@@ -1,0 +1,44 @@
+{
+  "k": 3,
+  "minimum_hit_at_k": 1.0,
+  "cases": [
+    {
+      "id": "reading-time-rule",
+      "query": "how is reading time calculated",
+      "filters": {"source_prefix": "knowledge_base"},
+      "relevant": ["business_rules#br-meta-02-reading-time"]
+    },
+    {
+      "id": "exact-rule-id",
+      "query": "BR-META-02",
+      "relevant": ["business_rules#br-meta-02-reading-time"]
+    },
+    {
+      "id": "word-count-rule",
+      "query": "word count whitespace separated tokens",
+      "filters": {"doc_types": ["business_rule"]},
+      "relevant": ["business_rules#br-meta-01-word-count"]
+    },
+    {
+      "id": "tag-filter-test-data",
+      "query": "selected tags ai travel expected titles clear filters",
+      "filters": {"source_prefix": "knowledge_base"},
+      "relevant": [
+        "test_data#tag-filter-expectations-for-the-primary-test-user",
+        "business_rules#br-tag-02-tag-filter"
+      ]
+    },
+    {
+      "id": "invalid-login-rule",
+      "query": "invalid username or password login",
+      "filters": {"doc_types": ["business_rule"]},
+      "relevant": ["business_rules#br-auth-02-invalid-login"]
+    },
+    {
+      "id": "flow-prerequisites",
+      "query": "inputs before Figma New Post Publish flow",
+      "filters": {"doc_types": ["flow_test"]},
+      "relevant": ["flow_test_data#new-post-publish"]
+    }
+  ]
+}

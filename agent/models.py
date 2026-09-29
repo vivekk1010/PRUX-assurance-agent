@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
@@ -11,6 +12,7 @@ Action = Literal[
     "check_calculation", "figma_check", "measure_load", "screenshot",
 ]
 StepStatus = Literal["ok", "missing", "mismatch", "refused", "error", "recovered", "skipped"]
+ReviewStatus = Literal["DRAFT", "APPROVED", "REJECTED", "NEEDS_CHANGE"]
 
 
 class AcceptanceCriterion(BaseModel):
@@ -51,6 +53,16 @@ class UXIntent(BaseModel):
     frame_nodes: dict[str, str] = {}
     frame_routes: dict[str, dict[str, Any]] = {}
     frame_images: dict[str, dict[str, Any]] = {}
+    features: list["UXFeature"] = []
+
+
+class UXFeature(BaseModel):
+    id: str
+    name: str = ""
+    frames: list[str] = []
+    node_ids: list[str] = []
+    story_keys: list[str] = []
+    ac_ids: list[str] = []
 
 
 class ACIntent(BaseModel):
@@ -71,6 +83,8 @@ class IntentModel(BaseModel):
     business_rules: list[str] = []
     ux_frames: list[str] = []
     context_sources: list[str] = []
+    context_citations: list["CitationRef"] = []
+    conflicts: list["ConflictNote"] = []
 
 
 class Target(BaseModel):
@@ -108,6 +122,80 @@ class Scenario(BaseModel):
 
 class ScenarioPlan(BaseModel):
     scenarios: list[Scenario]
+
+
+class CitationRef(BaseModel):
+    id: str
+    source: str
+    chunk_id: str = ""
+    score: float = 0.0
+    excerpt: str = ""
+
+
+class ConflictNote(BaseModel):
+    kind: str
+    severity: Literal["info", "warning", "error"] = "warning"
+    detail: str
+
+
+class TestCase(BaseModel):
+    id: str
+    story_key: str
+    ac_ids: list[str]
+    title: str
+    rationale: str = ""
+    steps: list[Step]
+    feature_ids: list[str] = []
+    figma_frames: list[str] = []
+    figma_node_ids: list[str] = []
+    citations: list[CitationRef] = []
+    status: ReviewStatus = "DRAFT"
+    reviewer: str = ""
+    review_comment: str = ""
+    reviewed_at: Optional[str] = None
+
+    @classmethod
+    def from_scenario(
+        cls,
+        scenario: Scenario,
+        *,
+        feature_ids: list[str] | None = None,
+        frames: list[str] | None = None,
+        node_ids: list[str] | None = None,
+        citations: list[CitationRef] | None = None,
+    ) -> "TestCase":
+        return cls(
+            **scenario.model_dump(),
+            feature_ids=feature_ids or [],
+            figma_frames=frames or [],
+            figma_node_ids=node_ids or [],
+            citations=citations or [],
+        )
+
+    def scenario(self) -> Scenario:
+        return Scenario(**self.model_dump(include={"id", "story_key", "ac_ids", "title", "rationale", "steps"}))
+
+
+class TestPlan(BaseModel):
+    id: str
+    version: int = 1
+    story_key: str
+    story_title: str = ""
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    source_hashes: dict[str, str] = {}
+    source_versions: dict[str, str] = {}
+    cases: list[TestCase]
+    citations: list[CitationRef] = []
+    conflicts: list[ConflictNote] = []
+    generator: str = ""
+
+    @property
+    def approved_cases(self) -> list[TestCase]:
+        return [case for case in self.cases if case.status == "APPROVED"]
+
+    def scenario_plan(self, approved_only: bool = True) -> ScenarioPlan:
+        cases = self.approved_cases if approved_only else self.cases
+        return ScenarioPlan(scenarios=[case.scenario() for case in cases])
 
 
 class StepResult(BaseModel):

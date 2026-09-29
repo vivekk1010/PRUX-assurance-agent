@@ -20,11 +20,31 @@ def _default_provider() -> str:
     return "replay"
 
 
+def _env(primary: str, legacy: str, default: str = "") -> str:
+    value = os.getenv(primary)
+    return value if value else os.getenv(legacy, default)
+
+
 @dataclass
 class Settings:
-    stage_base_url: str = field(default_factory=lambda: os.getenv("STAGE_BASE_URL", "http://127.0.0.1:5055").rstrip("/"))
-    stage_user: str = field(default_factory=lambda: os.getenv("STAGE_USER", "alice"))
-    stage_password: str = field(default_factory=lambda: os.getenv("STAGE_PASSWORD", ""))
+    target_adapter: str = field(default_factory=lambda: os.getenv("TARGET_ADAPTER", "stageui"))
+    target_profile: Path | None = field(default_factory=lambda: Path(os.environ["TARGET_PROFILE"]) if os.getenv("TARGET_PROFILE") else None)
+    target_feature_map: Path | None = field(
+        default_factory=lambda: Path(os.environ["TARGET_FEATURE_MAP"]) if os.getenv("TARGET_FEATURE_MAP") else None
+    )
+    stage_base_url: str = field(default_factory=lambda: _env("TARGET_BASE_URL", "STAGE_BASE_URL", "http://127.0.0.1:5055").rstrip("/"))
+    stage_user: str = field(default_factory=lambda: _env("TARGET_USER", "STAGE_USER", "alice"))
+    stage_password: str = field(default_factory=lambda: _env("TARGET_PASSWORD", "STAGE_PASSWORD", ""))
+    target_auth_method: str = field(default_factory=lambda: os.getenv("TARGET_AUTH_METHOD", "form"))
+    target_storage_state: Path | None = field(
+        default_factory=lambda: Path(os.environ["TARGET_STORAGE_STATE"]) if os.getenv("TARGET_STORAGE_STATE") else None
+    )
+    target_headers_json: str = field(default_factory=lambda: os.getenv("TARGET_HEADERS_JSON", "{}"))
+    target_health_path: str = field(default_factory=lambda: os.getenv("TARGET_HEALTH_PATH", "/login"))
+    target_allowed_origins: list[str] = field(
+        default_factory=lambda: [v.strip() for v in os.getenv("TARGET_ALLOWED_ORIGINS", "").split(",") if v.strip()]
+    )
+    target_read_only: bool = field(default_factory=lambda: _bool("TARGET_READ_ONLY", False))
     stage_db_path: Path = field(default_factory=lambda: ROOT / os.getenv("STAGE_DB_PATH", "stageui_app/instance/blog.db"))
     stage_reset_module: str = field(default_factory=lambda: os.getenv("STAGE_RESET_MODULE", "stageui_app.seed"))
 
@@ -36,6 +56,11 @@ class Settings:
         default_factory=lambda: os.getenv("EMBEDDING_PROVIDER", "openai" if os.getenv("OPENAI_API_KEY") else "hashing")
     )
     embedding_model: str = field(default_factory=lambda: os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"))
+    rag_mode: str = field(default_factory=lambda: os.getenv("RAG_MODE", "hybrid"))
+    rag_min_score: float | None = field(
+        default_factory=lambda: float(os.environ["RAG_MIN_SCORE"]) if os.getenv("RAG_MIN_SCORE") else None
+    )
+    rag_rrf_k: int = field(default_factory=lambda: int(os.getenv("RAG_RRF_K", "60")))
 
     max_recovery_attempts: int = field(default_factory=lambda: int(os.getenv("MAX_RECOVERY_ATTEMPTS", "2")))
     headless: bool = field(default_factory=lambda: _bool("HEADLESS", True))
@@ -45,6 +70,7 @@ class Settings:
     knowledge_dir: Path = ROOT / "knowledge_base"
     rag_index_dir: Path = field(default_factory=lambda: ROOT / os.getenv("RAG_INDEX_DIR", ".rag_index"))
     runs_dir: Path = field(default_factory=lambda: ROOT / os.getenv("RUNS_DIR", "runs"))
+    test_plans_dir: Path = field(default_factory=lambda: ROOT / os.getenv("TEST_PLANS_DIR", "test_plans"))
     replay_dir: Path = ROOT / "llm" / "replay"
     prompts_dir: Path = ROOT / "llm" / "prompts"
 

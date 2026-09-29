@@ -7,8 +7,8 @@ from typing import Optional
 from playwright.sync_api import Locator, sync_playwright
 
 from agent.guardrails import mask_secrets, resolve_placeholders, scrub_zip
+from agent.adapters import get_adapter
 from agent.models import Step, StepResult, Target, UXIntent
-from agent.tools.data import ReadOnlyDB, reconcile, CALCULATIONS
 from agent.tools.figma_compare import compare_frame
 
 SNAPSHOT_JS = """() => {
@@ -33,13 +33,18 @@ class BrowserSession:
         self.ux = ux
         self.out_dir = out_dir
         self.network: list[dict] = []
-        self._secrets = [settings.stage_password]
+        self.adapter = get_adapter(settings)
+        self._secrets = self.adapter.secrets()
 
     def __enter__(self) -> "BrowserSession":
         self.out_dir.mkdir(parents=True, exist_ok=True)
         self._pw = sync_playwright().start()
         self.browser = self._pw.chromium.launch(headless=self.s.headless)
-        self.context = self.browser.new_context(base_url=self.s.stage_base_url, viewport={"width": 1280, "height": 800})
+        self.context = self.browser.new_context(
+            base_url=self.s.stage_base_url,
+            viewport={"width": 1280, "height": 800},
+            **self.adapter.context_options(),
+        )
         self.context.tracing.start(screenshots=True, snapshots=True, sources=False)
         self.page = self.context.new_page()
         self.page.set_default_timeout(self.s.step_timeout_ms)
@@ -260,45 +265,20 @@ class BrowserSession:
         return ("ok", self.page.url, {}) if ok else ("mismatch", f"URL is {self.page.url}, expected to contain '{step.contains}'", {})
 
     def _do_expect_rows(self, step: Step):
+        if not self.adapter.supports("rows"):
+            return "error", f"target adapter '{self.adapter.name}' does not provide row-list semantics", {}
         expected = set(step.values or [])
-        if not self.page.url.split("?")[0].rstrip("/").endswith("/blogs"):
-            self.page.goto("/blogs")
+        if not self.page.url.split("?")[0].rstrip("/").endswith(self.adapter.list_path.rstrip("/")):
+            self.page.goto(self.adapter.list_path)
             self._settle()
-        titles = self.page.get_by_test_id("post-title")
+        titles = self.page.get_by_test_id(self.adapter.row_title_testid)
         ok = self._poll(lambda: set(titles.all_inner_texts()) == expected)
         actual = titles.all_inner_texts()
         data = {"expected": sorted(expected), "actual": actual}
         return ("ok", "", data) if ok else ("mismatch", f"expected rows {sorted(expected)}, saw {actual}", data)
 
     def _do_check_calculation(self, step: Step):
-        if step.name not in CALCULATIONS:
-            return "error", f"unknown calculation '{step.name}'", {}
-        if not self.page.url.rstrip("/").endswith("/blogs"):
-            self.page.goto("/blogs")
-            self._settle()
-        rows = self.page.get_by_test_id("post-row")
-        if not self._visible(rows, self.s.step_timeout_ms):
-            return "missing", "no post rows on My Blogs", {"reason": "not_found"}
-        testid = CALCULATIONS[step.name]["ui_testid"]
-        ui_rows = {int(r.get_attribute("data-post-id")): r.get_by_test_id(testid).inner_text() for r in rows.all()}
-        api = self.page.request.get("/api/posts")
-        api_posts = api.json()
-        self.network.append({"method": "GET", "url": api.url, "status": api.status, "body": api_posts, "source": "agent"})
-        db = ReadOnlyDB(self.s.stage_db_path)
-        try:
-            marks = ",".join("?" * len(ui_rows))
-            source = db.query(f"SELECT id, title, content FROM posts WHERE id IN ({marks})", tuple(ui_rows))
-        finally:
-            db.close()
-        result = reconcile(step.name, ui_rows, api_posts, source)
-        (self.out_dir / f"calculation-{step.name}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
-        if result["problems"]:
-            summary = "; ".join(
-                f"'{p['title']}': UI={p['ui']} API={p['api']} expected={p['expected']} (words={p['source_words']}) -> {p['finding']}"
-                for p in result["problems"]
-            )
-            return "mismatch", f"{len(result['problems'])}/{len(result['rows'])} posts break {result['rule']}: {summary}", result
-        return "ok", f"all {len(result['rows'])} posts match {result['rule']}", result
+        return self.adapter.check_calculation(self, step.name or "")
 
     def _do_figma_check(self, step: Step):
         components = self.ux.frames.get(step.frame)

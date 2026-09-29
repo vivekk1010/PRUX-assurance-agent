@@ -309,3 +309,50 @@ Precedence: DEFECT > GAP > RISK > PASS. Story label = highest-precedence AC labe
 | Design conformance | Semantic component + flow checks decide; vision review advises | Pixel diff or LLM judge | Tolerates dynamic content and approved variances; reproducible labels |
 | Vision model | gpt-4o | gpt-4o-mini | Fewer false positives and about 25x fewer image tokens in practice |
 | Keyless mode | Replay provider | none | Repeatable evaluations at zero cost |
+
+## 11. Governed planning and execution
+
+The production path is split at the human decision boundary:
+
+```mermaid
+stateDiagram-v2
+    [*] --> retrieve_per_ac
+    retrieve_per_ac --> generate_draft
+    generate_draft --> export_excel
+    export_excel --> human_review
+    human_review --> validate_import
+    validate_import --> approved_catalog
+    approved_catalog --> select_cases
+    select_cases --> execute
+    execute --> classify
+    classify --> report
+    report --> evaluate_artifacts
+    evaluate_artifacts --> [*]
+```
+
+`test_plans/<story>/vN.json` is canonical. Each plan records source hashes, grounding citations, feature/frame/node links and review metadata. Excel is a validated review projection, not an executable source. Execution rejects unapproved cases and stale story/knowledge sources.
+
+## 12. Target application adapters
+
+`agent/adapters/` separates browser mechanics from application semantics:
+
+| Adapter | Authentication | Reset/data capabilities |
+|---|---|---|
+| `stageui` | Username/password form with local secret placeholders | Local seed reset, read-only SQLite and Blog Notes calculations |
+| `generic_web` | Form, Playwright storage state, headers/cookies, or none | No reset or data probe by default; capabilities come from the JSON profile |
+
+All navigation is checked against parsed allowed origins. Generic-site credentials are injected only inside the browser context and are included in evidence scrubbing. Unsupported app-specific checks produce RISK.
+
+## 13. Shared tool registry
+
+`agent/tool_registry.py` loads built-in, Python-plugin and MCP tool descriptors from `config/tools.json`. The same contract controls chat-visible tools, locator recovery and MCP exposure. Before invocation it validates JSON input, surface, risk, capability grants and timeout. MCP transport details remain outside prompts.
+
+## 14. Hybrid RAG and grounding
+
+The local index remains numpy/JSON for Windows portability, with a pure-Python BM25 channel added. Retrieval uses metadata filtering and reciprocal-rank fusion over dense and lexical rankings. Exact business-rule IDs are resolved first; context is then retrieved per acceptance criterion and check type.
+
+Chunks carry document type, story/AC/rule/frame/feature metadata, stable content hashes and source versions. Plans retain citation references. `manifest.json` detects stale source files or Figma versions, while `evals/run_retrieval_eval.py` measures Hit@k, Recall@k and MRR offline with the hashing embedder.
+
+## 15. End-of-run quality gate
+
+`agent/reporting/evaluate_run.py` audits the emitted `results.json` and evidence tree after reporting. It verifies approved-case coverage, AC and story label consistency, screenshots/traces/network evidence, referenced-file existence, report presence and secret absence—including files inside Playwright trace ZIPs. It writes `eval.json`; the HTML report and reviewed workbook expose the same summary. Multi-run label accuracy and flake evaluation remain in `evals/run_eval.py`.

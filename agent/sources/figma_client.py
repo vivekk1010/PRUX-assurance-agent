@@ -9,7 +9,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from agent.config import ROOT
-from agent.models import UIComponent, UXIntent
+from agent.models import UIComponent, UXFeature, UXIntent
 
 
 def _server_params() -> StdioServerParameters:
@@ -45,6 +45,7 @@ async def _fetch(story_key: Optional[str], with_images: bool = False) -> tuple[U
             flows = await call("get_prototype_flows")
             variances = await call("get_approved_variances")
             routes = await call("get_frame_routes")
+            features = await call("get_features")
             nodes = {f["name"]: f["id"] for f in await call("list_frames")}
             images = {f: await call("get_frame_image", frame=f) for f in frames} if with_images else {}
             tools = [t.name for t in (await session.list_tools()).tools]
@@ -55,6 +56,10 @@ async def _fetch(story_key: Optional[str], with_images: bool = False) -> tuple[U
         frame_nodes={f: n for f, n in nodes.items() if f in frames},
         frame_routes={f: r for f, r in routes.items() if f in frames},
         frame_images=images,
+        features=[
+            UXFeature(**feature) for feature in features
+            if not story_key or not feature.get("story_keys") or story_key in feature.get("story_keys", [])
+        ],
     )
     return ux, tools
 

@@ -56,6 +56,7 @@ def write_reports(run_dir: Path, results: list[StoryResult], meta: dict, secrets
     env = Environment(loader=FileSystemLoader(Path(__file__).parent / "templates"), autoescape=True)
     html = env.get_template("report.html.j2").render(
         meta=meta, stories=data["stories"], frames=data["figma_conformance"],
+        evaluation=meta.get("evaluation"),
         generated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
     report = run_dir / "report.html"

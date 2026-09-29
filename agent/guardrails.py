@@ -4,7 +4,7 @@ import zipfile
 from datetime import date
 from pathlib import Path
 from typing import Optional
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import quote_plus, urljoin, urlparse
 
 from agent.models import Step
 
@@ -13,27 +13,41 @@ DESTRUCTIVE = re.compile(r"\b(delete|remove|drop|destroy|purge|reset|admin|trunc
 MASK = "••••••"
 
 
-def check_step(step: Step, base_url: str) -> Optional[str]:
+def check_step(
+    step: Step,
+    base_url: str,
+    allowed_origins: list[str] | None = None,
+    read_only: bool = False,
+) -> Optional[str]:
     """Return a refusal reason, or None when the step is allowed."""
     if step.action not in ALLOWED_ACTIONS:
         return f"action '{step.action}' is not allow-listed"
     if step.path:
-        parsed = urlparse(step.path)
-        if parsed.scheme or parsed.netloc:
-            if not step.path.startswith(base_url):
-                return f"navigation outside StageUI ({step.path})"
+        parsed = urlparse(urljoin(base_url + "/", step.path))
+        if parsed.scheme not in {"http", "https"} or parsed.username or parsed.password:
+            return f"unsafe navigation URL ({step.path})"
+        allowed = allowed_origins or [f"{urlparse(base_url).scheme}://{urlparse(base_url).netloc}"]
+        origin = f"{parsed.scheme}://{parsed.netloc}"
+        if origin not in {a.rstrip("/") for a in allowed}:
+            return f"navigation outside StageUI/allowed target origins ({step.path})"
         if DESTRUCTIVE.search(step.path):
             return f"destructive path '{step.path}'"
     if step.action in {"click", "fill", "select"} and step.target:
         described = " ".join(filter(None, [step.target.name, step.target.label, step.target.text, step.target.testid]))
         if DESTRUCTIVE.search(described):
             return f"destructive target '{described}'"
+        if read_only and step.action in {"fill", "select", "click"}:
+            auth = described.lower() in {"username", "email", "password", "log in", "login", "sign in"}
+            if not auth:
+                return f"interactive action '{step.action}' denied by read-only mode"
     return None
 
 
 def resolve_placeholders(value: str, user: str, password: str) -> str:
     return (value.replace("${STAGE_USER}", user)
                  .replace("${STAGE_PASSWORD}", password)
+                 .replace("${TARGET_USER}", user)
+                 .replace("${TARGET_PASSWORD}", password)
                  .replace("${TODAY}", date.today().isoformat()))
 
 

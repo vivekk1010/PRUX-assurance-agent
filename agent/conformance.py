@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from agent.classifier import PRECEDENCE
+from agent.adapters import get_adapter
 from agent.config import Settings
 from agent.guardrails import check_step
 from agent.models import FlowCheck, FrameVerdict, Step, Target, UXIntent, VisualReview
@@ -17,14 +18,6 @@ from agent.tools.browser import BrowserSession
 from agent.tools.figma_compare import compare_frame
 from llm import LLM, ReplayMissing
 from mcp_servers.figma_mock.render_frames import frame_slug
-
-LOGIN = [
-    Step(action="goto", path="/login"),
-    Step(action="fill", target=Target(label="Username"), value="${STAGE_USER}"),
-    Step(action="fill", target=Target(label="Password"), value="${STAGE_PASSWORD}"),
-    Step(action="click", target=Target(role="button", name="Log in")),
-]
-
 
 def _load_prerequisites(settings: Settings) -> dict:
     path = settings.knowledge_dir / "flow_test_data.json"
@@ -42,6 +35,7 @@ class _Counter:
 
 def _check_flow(b: BrowserSession, settings: Settings, ux: UXIntent, frame: str, flow: dict,
                 prereqs: dict, step_no: _Counter) -> FlowCheck:
+    adapter = get_adapter(settings)
     route = ux.frame_routes[frame]["path"]
     target_route = ux.frame_routes.get(flow["to_frame"], {}).get("path", "")
     base = {"trigger_label": flow["trigger_label"], "to_frame": flow["to_frame"], "expected_path": target_route}
@@ -50,7 +44,7 @@ def _check_flow(b: BrowserSession, settings: Settings, ux: UXIntent, frame: str,
         b.execute(Step(action="fill", target=Target(label=field["label"]), value=field["value"]), step_no())
 
     click = Step(action="click", target=Target(role="button", name=flow["trigger_label"]))
-    refusal = check_step(click, settings.stage_base_url)
+    refusal = check_step(click, settings.stage_base_url, adapter.allowed_origins, settings.target_read_only)
     if refusal:
         return FlowCheck(**base, status="error", detail=f"guardrail: {refusal}")
     result = b.execute(click, step_no())
@@ -118,6 +112,7 @@ def _verdict(frame: str, findings: list[dict], flows: list[FlowCheck], login_ok:
 
 
 def run_conformance(settings: Settings, ux: UXIntent, llm: LLM, run_dir: Path, log=print) -> list[FrameVerdict]:
+    adapter = get_adapter(settings)
     prereqs = _load_prerequisites(settings)
     verdicts = []
     for frame, components in ux.frames.items():
@@ -132,7 +127,7 @@ def run_conformance(settings: Settings, ux: UXIntent, llm: LLM, run_dir: Path, l
         with BrowserSession(settings, ux, out) as b:
             login_ok = True
             if route.get("requires_login"):
-                login_ok = all(b.execute(s, step_no()).status == "ok" for s in LOGIN)
+                login_ok = all(b.execute(s, step_no()).status == "ok" for s in adapter.login_steps())
             b.execute(Step(action="goto", path=route["path"]), step_no())
             b.page.screenshot(path=str(out / "live.png"))
             findings = compare_frame(b.page, components, ux.approved_variances)

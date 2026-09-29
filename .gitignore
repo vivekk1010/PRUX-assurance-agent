@@ -10,6 +10,7 @@ __pycache__/
 .rag_index/
 .figma_cache/
 runs/
+test_plans/
 stageui_app/instance/
 evals/results/
 *.log

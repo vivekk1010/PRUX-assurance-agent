@@ -1,6 +1,5 @@
 """LangGraph orchestration of one assurance run per story."""
-import subprocess
-import sys
+import json
 import time
 from pathlib import Path
 from typing import Optional, TypedDict
@@ -8,16 +7,21 @@ from typing import Optional, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from agent.classifier import classify, story_label
+from agent.adapters import get_adapter
 from agent.config import ROOT, Settings
 from agent.executor import run_scenario
 from agent.intent_builder import build_intent, retrieve_context
-from agent.models import IntentModel, ScenarioPlan, ScenarioResult, Story, StoryResult, UXIntent, ACVerdict
+from agent.models import (
+    ACVerdict, CitationRef, IntentModel, ScenarioPlan, ScenarioResult, Story,
+    StoryResult, TestCase, TestPlan, UXFeature, UXIntent,
+)
 from agent.reporting.report import write_recommendation
 from agent.scenario_generator import generate_scenarios
 from agent.sources.figma_client import fetch_ux_intent
 from agent.sources.jira import load_story
 from llm import LLM
 from rag.retriever import Retriever
+from agent.test_catalog import TestCatalog, file_hash, plan_id
 
 
 class AssuranceState(TypedDict, total=False):
@@ -77,8 +81,9 @@ class AssuranceAgent:
     # ---------- nodes ----------
     def reset_stage_data(self, st: AssuranceState) -> dict:
         if self.reset_stage:
-            subprocess.run([sys.executable, "-m", self.s.stage_reset_module], cwd=ROOT, check=True, capture_output=True)
-            self.log("  • StageUI data reset to controlled seed")
+            adapter = get_adapter(self.s)
+            adapter.reset()
+            self.log(f"  • {adapter.name} reset completed")
         return {"notes": []}
 
     def load_story(self, st: AssuranceState) -> dict:
@@ -92,6 +97,13 @@ class AssuranceAgent:
     def load_ux_intent(self, st: AssuranceState) -> dict:
         try:
             ux = fetch_ux_intent(st["story_key"])
+            configured = list(get_adapter(self.s).profile.get("features", []))
+            feature_map = self.s.target_feature_map
+            if feature_map:
+                configured.extend(json.loads(feature_map.read_text(encoding="utf-8")).get("features", []))
+            by_id = {feature.id: feature for feature in ux.features}
+            by_id.update({feature.id: feature for feature in map(UXFeature.model_validate, configured)})
+            ux.features = list(by_id.values())
             self.log(f"  • Figma MCP: frames {list(ux.frames)}, {len(ux.approved_variances)} approved variance(s)")
             return {"ux": ux}
         except Exception as exc:
@@ -152,6 +164,110 @@ class AssuranceAgent:
         result.duration_ms = int((time.perf_counter() - start) * 1000)
         result.llm_usage = self.llm.usage_summary()
         (self.story_dir(key) / "result.json").write_text(result.model_dump_json(indent=2), encoding="utf-8")
+        return result
+
+    def generate_test_plan(self, key: str, catalog: TestCatalog) -> tuple[TestPlan, Path]:
+        """Generate and persist a draft plan without touching the target app."""
+        self.llm = LLM.from_settings(self.s)
+        state: AssuranceState = {"story_key": key, "notes": []}
+        for node in (self.load_story, self.load_ux_intent, self.retrieve_context, self.build_intent, self.generate_scenarios):
+            state.update(node(state))
+            if state.get("error"):
+                raise RuntimeError(state["error"])
+
+        version = catalog.next_version(key)
+        citations = list(state["intent"].context_citations)
+        if not citations:
+            citations = [
+                CitationRef(
+                    id=f"C{i}", source=h.chunk.source, chunk_id=h.chunk.id,
+                    score=h.score, excerpt=h.chunk.text[:240],
+                )
+                for i, h in enumerate(state["hits"], 1)
+            ]
+        features = [
+            feature for feature in state["ux"].features
+            if not feature.story_keys or key in feature.story_keys
+        ]
+        frames = list(state["intent"].ux_frames)
+        node_ids = [
+            component.node_id
+            for frame in frames
+            for component in state["ux"].frames.get(frame, [])
+        ]
+        cases = []
+        for scenario in state["plan"].scenarios:
+            matching = [
+                feature for feature in features
+                if not feature.ac_ids or set(feature.ac_ids) & set(scenario.ac_ids)
+            ]
+            cases.append(TestCase.from_scenario(
+                scenario,
+                feature_ids=[feature.id for feature in matching],
+                frames=sorted(set(f for feature in matching for f in feature.frames)) or frames,
+                node_ids=sorted(set(n for feature in matching for n in feature.node_ids)) or node_ids,
+                citations=citations,
+            ))
+
+        source_paths = {f"stories/{key}.json"}
+        source_paths.update(c.source.split("#", 1)[0] for c in citations if not c.source.startswith("figma/"))
+        hashes = {
+            relative: file_hash(ROOT / relative)
+            for relative in sorted(source_paths)
+            if (ROOT / relative).is_file()
+        }
+        plan = TestPlan(
+            id=plan_id(key, version, hashes),
+            version=version,
+            story_key=key,
+            story_title=state["story"].title,
+            source_hashes=hashes,
+            source_versions={"figma": state["ux"].version or ""},
+            cases=cases,
+            citations=citations,
+            conflicts=state["intent"].conflicts,
+            generator=f"{self.s.llm_provider}:{self.s.llm_model}",
+        )
+        return plan, catalog.save(plan)
+
+    def execute_test_plan(self, plan: TestPlan) -> StoryResult:
+        """Execute an approved, previously generated plan."""
+        approved = plan.approved_cases
+        if not approved:
+            raise ValueError(f"Plan {plan.id} has no approved test cases")
+        self.llm = LLM.from_settings(self.s)
+        story = load_story(self.s.stories_dir, plan.story_key)
+        ux = fetch_ux_intent(plan.story_key)
+        expected_figma = plan.source_versions.get("figma")
+        if expected_figma and ux.version != expected_figma:
+            raise ValueError(
+                f"Plan {plan.id} is stale: Figma version changed from {expected_figma} to {ux.version}"
+            )
+        hits = retrieve_context(story, self.retriever)
+        intent, _ = build_intent(story, ux, hits, self.llm)
+        story_dir = self.story_dir(plan.story_key)
+        (story_dir / "intent.json").write_text(intent.model_dump_json(indent=2), encoding="utf-8")
+        (story_dir / "scenarios.json").write_text(
+            plan.scenario_plan(approved_only=True).model_dump_json(indent=2), encoding="utf-8"
+        )
+        state: AssuranceState = {
+            "story_key": plan.story_key,
+            "story": story,
+            "ux": ux,
+            "hits": hits,
+            "intent": intent,
+            "plan": plan.scenario_plan(approved_only=True),
+            "notes": [f"Approved plan {plan.id}"],
+        }
+        start = time.perf_counter()
+        state.update(self.reset_stage_data(state))
+        state.update(self.execute_scenarios(state))
+        state.update(self.classify(state))
+        state.update(self.report(state))
+        result: StoryResult = state["result"]
+        result.duration_ms = int((time.perf_counter() - start) * 1000)
+        result.llm_usage = self.llm.usage_summary()
+        (self.story_dir(plan.story_key) / "result.json").write_text(result.model_dump_json(indent=2), encoding="utf-8")
         return result
 
     def mermaid(self) -> str:

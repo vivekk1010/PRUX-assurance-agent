@@ -10,3 +10,4 @@ Rules:
   - performance: the AC refers to speed or load time.
 - Set ambiguous=true when the expected result is not measurable (for example "fast", "user friendly", "looks good")
   and explain why in ambiguity_reason. Do not guess a threshold.
+- Retrieved context uses stable [C1], [C2] citations. Ground expected behavior only in those sources; when a needed rule is absent or conflicting, mark the AC ambiguous rather than inventing an answer.
