@@ -13,6 +13,7 @@
   th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid #e5e7eb; }
   .label { font-weight: 700; padding: 2px 8px; border-radius: 4px; color: #fff; font-size: 12px; white-space: nowrap; }
   .PASS { background: #2f9e44; } .GAP { background: #e67700; } .DEFECT { background: #c92a2a; } .RISK { background: #6741d9; }
+  .WARN, .UNSTABLE { background: #e67700; } .FAIL { background: #c92a2a; } .NOT_MEASURED { background: #6b7280; }
   details { margin: 6px 0; } summary { cursor: pointer; }
   code { font-size: 12px; }
   .ok, .matched { color: #2f9e44; } .approved_variance { color: #b76e00; }
@@ -49,6 +50,44 @@
     {% endfor %}
   </table>
   <p class="muted">Full details: <a href="eval.json">eval.json</a>. This deterministic audit does not change requirement verdicts.</p>
+</div>
+{% endif %}
+
+{% if performance and performance.enabled %}
+<div class="card">
+  <h2>Performance assurance</h2>
+  <p>
+    <span class="label {{ 'PASS' if performance.passed else 'FAIL' }}">{{ 'PASS' if performance.passed else 'FAIL' }}</span>
+    Controlled page, feature, component, API, and load measurements are evaluated separately from functional verdicts.
+  </p>
+  {% if performance.summaries %}
+  <table>
+    <tr><th>Profile</th><th>Scope</th><th>Status</th><th>Metric</th><th>Median</th><th>p90</th><th>p95</th><th>CV</th><th>Budget</th></tr>
+    {% for summary in performance.summaries %}
+      {% for metric, stats in summary.statistics.items() %}
+      <tr>
+        <td>{{ summary.profile_id }}</td>
+        <td>{{ summary.scope }}</td>
+        <td><span class="label {{ summary.status }}">{{ summary.status }}</span></td>
+        <td><code>{{ metric }}</code></td>
+        <td>{{ stats.median | round(2) }}</td>
+        <td>{{ stats.p90 | round(2) }}</td>
+        <td>{{ stats.p95 | round(2) }}</td>
+        <td>{{ stats.cv | round(3) }}</td>
+        <td>
+          {% for budget in summary.budgets if budget.metric == metric %}
+            <span class="{{ 'ok' if budget.passed else 'error' }}">{{ budget.reason }}</span><br>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% if performance.warnings %}
+  <p class="muted">Warnings: {{ performance.warnings | join('; ') }}</p>
+  {% endif %}
+  <p class="muted">Raw samples and summaries: <a href="performance.json">performance.json</a> · Prometheus exposition: <a href="performance/metrics.prom">metrics.prom</a></p>
 </div>
 {% endif %}
 

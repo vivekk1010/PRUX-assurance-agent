@@ -46,9 +46,9 @@ def write_recommendation(result: StoryResult, llm: LLM) -> str:
 
 
 def write_reports(run_dir: Path, results: list[StoryResult], meta: dict, secrets: list[str],
-                  frames: list[FrameVerdict] | None = None) -> Path:
+                  frames: list[FrameVerdict] | None = None, performance: dict | None = None) -> Path:
     payload = {"meta": meta, "figma_conformance": [f.model_dump() for f in frames or []],
-               "stories": [r.model_dump() for r in results]}
+               "stories": [r.model_dump() for r in results], "performance": performance}
     raw = mask_secrets(json.dumps(payload, indent=2, default=str), secrets)
     (run_dir / "results.json").write_text(raw, encoding="utf-8")
 
@@ -56,7 +56,7 @@ def write_reports(run_dir: Path, results: list[StoryResult], meta: dict, secrets
     env = Environment(loader=FileSystemLoader(Path(__file__).parent / "templates"), autoescape=True)
     html = env.get_template("report.html.j2").render(
         meta=meta, stories=data["stories"], frames=data["figma_conformance"],
-        evaluation=meta.get("evaluation"),
+        evaluation=meta.get("evaluation"), performance=data.get("performance"),
         generated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
     report = run_dir / "report.html"

@@ -1,0 +1,195 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8f7fb"/>
+      <stop offset="1" stop-color="#eeebf7"/>
+    </linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d4aff"/>
+      <stop offset="1" stop-color="#4c2dca"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#2f2456" flood-opacity=".12"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b82a2"/>
+    </marker>
+    <style>
+      .title{font:700 38px Inter,Arial,sans-serif;fill:#17152b;letter-spacing:-1px}
+      .subtitle{font:400 16px Inter,Arial,sans-serif;fill:#716f84}
+      .section{font:700 13px Inter,Arial,sans-serif;fill:#6d4aff;letter-spacing:1.5px}
+      .cardTitle{font:700 17px Inter,Arial,sans-serif;fill:#201d36}
+      .cardCopy{font:400 12px Inter,Arial,sans-serif;fill:#716f84}
+      .pill{font:700 11px Inter,Arial,sans-serif;fill:#fff}
+      .small{font:600 11px Inter,Arial,sans-serif;fill:#514c62}
+      .line{fill:none;stroke:#8b82a2;stroke-width:2;marker-end:url(#arrow)}
+      .dash{fill:none;stroke:#9d91c5;stroke-width:2;stroke-dasharray:7 7;marker-end:url(#arrow)}
+    </style>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <circle cx="1460" cy="80" r="210" fill="#6d4aff" opacity=".06"/>
+  <circle cx="80" cy="920" r="250" fill="#32b784" opacity=".05"/>
+
+  <text x="70" y="72" class="section">PLUGGABLE ASSURANCE PLATFORM · PERFORMANCE</text>
+  <text x="70" y="120" class="title">From approved intent to measurable experience.</text>
+  <text x="70" y="151" class="subtitle">Configurable page, feature, component, API and load benchmarks with deterministic golden regression.</text>
+
+  <!-- Sources -->
+  <text x="70" y="213" class="section">01 · PRODUCT INTENT</text>
+  <g filter="url(#shadow)">
+    <rect x="70" y="235" width="190" height="112" rx="18" fill="#fff" stroke="#e1ddec"/>
+    <rect x="90" y="255" width="38" height="38" rx="10" fill="#eaf2ff"/>
+    <text x="103" y="280" font-family="Arial" font-size="19" fill="#3978d1">J</text>
+    <text x="90" y="315" class="cardTitle">Jira stories</text>
+    <text x="90" y="335" class="cardCopy">ACs · budgets · features</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="280" y="235" width="190" height="112" rx="18" fill="#fff" stroke="#e1ddec"/>
+    <rect x="300" y="255" width="38" height="38" rx="10" fill="#f1eaff"/>
+    <path d="M309 264h10l10 10-10 10h-10z" fill="#8b5cf6"/>
+    <text x="300" y="315" class="cardTitle">Figma intent</text>
+    <text x="300" y="335" class="cardCopy">Frames · nodes · flows</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="490" y="235" width="190" height="112" rx="18" fill="#fff" stroke="#e1ddec"/>
+    <rect x="510" y="255" width="38" height="38" rx="10" fill="#e6f8f1"/>
+    <path d="M519 264h20v20h-20z" fill="#32b784" opacity=".8"/>
+    <text x="510" y="315" class="cardTitle">Hybrid RAG</text>
+    <text x="510" y="335" class="cardCopy">Rules · contracts · context</text>
+  </g>
+
+  <!-- Governed core -->
+  <path d="M680 291 C735 291 735 291 790 291" class="line"/>
+  <text x="790" y="213" class="section">02 · GOVERNED CORE</text>
+  <g filter="url(#shadow)">
+    <rect x="790" y="235" width="310" height="112" rx="18" fill="url(#hero)"/>
+    <rect x="812" y="256" width="112" height="24" rx="12" fill="#ffffff" opacity=".16"/>
+    <text x="828" y="272" class="pill">HUMAN APPROVED</text>
+    <text x="812" y="313" font-family="Inter,Arial" font-size="20" font-weight="700" fill="#fff">Versioned test catalog</text>
+    <text x="812" y="335" font-family="Inter,Arial" font-size="12" fill="#ddd7ff">Safe selector · source freshness · policy</text>
+  </g>
+
+  <!-- profile resolver -->
+  <path d="M1100 291 C1150 291 1150 291 1200 291" class="line"/>
+  <g filter="url(#shadow)">
+    <rect x="1200" y="235" width="330" height="112" rx="18" fill="#fff" stroke="#d8d1ef" stroke-width="2"/>
+    <text x="1222" y="273" class="cardTitle">Performance profile resolver</text>
+    <text x="1222" y="298" class="cardCopy">test case ’ component ’ feature ’ page ’ default</text>
+    <rect x="1222" y="315" width="75" height="20" rx="10" fill="#ede9ff"/><text x="1237" y="329" class="small">OFF BY DEFAULT</text>
+    <rect x="1307" y="315" width="82" height="20" rx="10" fill="#e6f8f1"/><text x="1321" y="329" class="small">CONFIG DRIVEN</text>
+  </g>
+
+  <!-- scopes -->
+  <text x="70" y="421" class="section">03 · DYNAMIC MEASUREMENT SCOPES</text>
+  <g>
+    <rect x="70" y="445" width="270" height="126" rx="18" fill="#fff" stroke="#e1ddec"/>
+    <circle cx="101" cy="478" r="15" fill="#6d4aff"/><text x="96" y="483" class="pill">P</text>
+    <text x="126" y="483" class="cardTitle">Page</text>
+    <text x="92" y="515" class="cardCopy">Cold/warm navigation · Web Vitals</text>
+    <text x="92" y="539" class="small">TTFB · FCP · LCP · CLS · INP · bytes</text>
+  </g>
+  <g>
+    <rect x="360" y="445" width="270" height="126" rx="18" fill="#fff" stroke="#e1ddec"/>
+    <circle cx="391" cy="478" r="15" fill="#3978d1"/><text x="386" y="483" class="pill">F</text>
+    <text x="416" y="483" class="cardTitle">Feature journey</text>
+    <text x="382" y="515" class="cardCopy">Multi-page approved user flow</text>
+    <text x="382" y="539" class="small">End-to-end · steps · API · trace IDs</text>
+  </g>
+  <g>
+    <rect x="650" y="445" width="270" height="126" rx="18" fill="#fff" stroke="#e1ddec"/>
+    <circle cx="681" cy="478" r="15" fill="#32b784"/><text x="676" y="483" class="pill">C</text>
+    <text x="706" y="483" class="cardTitle">Component</text>
+    <text x="672" y="515" class="cardCopy">Action mark ’ settled-state mark</text>
+    <text x="672" y="539" class="small">Interaction · long tasks · render · calls</text>
+  </g>
+  <g>
+    <rect x="940" y="445" width="270" height="126" rx="18" fill="#fff" stroke="#e1ddec"/>
+    <circle cx="971" cy="478" r="15" fill="#e39c27"/><text x="966" y="483" class="pill">A</text>
+    <text x="996" y="483" class="cardTitle">API / service</text>
+    <text x="962" y="515" class="cardCopy">Feature-linked backend operation</text>
+    <text x="962" y="539" class="small">p50p99 · errors · DB/cache spans</text>
+  </g>
+  <g>
+    <rect x="1230" y="445" width="300" height="126" rx="18" fill="#fff" stroke="#e1ddec"/>
+    <circle cx="1261" cy="478" r="15" fill="#e5484d"/><text x="1256" y="483" class="pill">L</text>
+    <text x="1286" y="483" class="cardTitle">Load</text>
+    <text x="1252" y="515" class="cardCopy">Controlled browser or protocol users</text>
+    <text x="1252" y="539" class="small">Throughput · saturation · error rate</text>
+  </g>
+
+  <!-- arrows from resolver -->
+  <path d="M1365 347 C1365 397 205 397 205 445" class="dash"/>
+  <path d="M1365 347 C1365 405 495 405 495 445" class="dash"/>
+  <path d="M1365 347 C1365 413 785 413 785 445" class="dash"/>
+  <path d="M1365 347 C1365 421 1075 421 1075 445" class="dash"/>
+  <path d="M1365 347 L1365 445" class="dash"/>
+
+  <!-- engines -->
+  <text x="70" y="637" class="section">04 · MEASUREMENT &amp; CORRELATION</text>
+  <g filter="url(#shadow)">
+    <rect x="70" y="661" width="250" height="112" rx="18" fill="#201d36"/>
+    <text x="94" y="700" font-family="Inter,Arial" font-size="18" font-weight="700" fill="#fff">Playwright collector</text>
+    <text x="94" y="726" font-family="Inter,Arial" font-size="12" fill="#aaa4bd">Performance API · CDP · resources</text>
+    <text x="94" y="749" font-family="Inter,Arial" font-size="11" fill="#81799c">Diagnostic + controlled probes</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="340" y="661" width="250" height="112" rx="18" fill="#201d36"/>
+    <text x="364" y="700" font-family="Inter,Arial" font-size="18" font-weight="700" fill="#fff">Grafana k6</text>
+    <text x="364" y="726" font-family="Inter,Arial" font-size="12" fill="#aaa4bd">Browser journeys · protocol load</text>
+    <text x="364" y="749" font-family="Inter,Arial" font-size="11" fill="#81799c">Thresholds · raw distributions</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="610" y="661" width="250" height="112" rx="18" fill="#201d36"/>
+    <text x="634" y="700" font-family="Inter,Arial" font-size="18" font-weight="700" fill="#fff">OpenTelemetry</text>
+    <text x="634" y="726" font-family="Inter,Arial" font-size="12" fill="#aaa4bd">W3C trace context · OTLP</text>
+    <text x="634" y="749" font-family="Inter,Arial" font-size="11" fill="#81799c">Browser ’ API ’ DB/cache</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="880" y="661" width="250" height="112" rx="18" fill="#201d36"/>
+    <text x="904" y="700" font-family="Inter,Arial" font-size="18" font-weight="700" fill="#fff">Optional specialists</text>
+    <text x="904" y="726" font-family="Inter,Arial" font-size="12" fill="#aaa4bd">Lighthouse CI · BenchmarkDotNet</text>
+    <text x="904" y="749" font-family="Inter,Arial" font-size="11" fill="#81799c">Page audits · .NET hot paths</text>
+  </g>
+
+  <!-- outputs -->
+  <path d="M1130 717 L1190 717" class="line"/>
+  <g filter="url(#shadow)">
+    <rect x="1190" y="637" width="340" height="160" rx="20" fill="#fff" stroke="#d8d1ef" stroke-width="2"/>
+    <text x="1215" y="675" class="cardTitle">Deterministic performance gate</text>
+    <text x="1215" y="700" class="cardCopy">Warm-ups · raw samples · p50/p90/p95 · MAD · CV</text>
+    <rect x="1215" y="721" width="62" height="24" rx="12" fill="#e6f8f1"/><text x="1231" y="737" class="small">PASS</text>
+    <rect x="1286" y="721" width="62" height="24" rx="12" fill="#fff2d9"/><text x="1302" y="737" class="small">WARN</text>
+    <rect x="1357" y="721" width="55" height="24" rx="12" fill="#ffebec"/><text x="1373" y="737" class="small">FAIL</text>
+    <rect x="1421" y="721" width="88" height="24" rx="12" fill="#eeeafe"/><text x="1434" y="737" class="small">UNSTABLE</text>
+    <text x="1215" y="775" class="cardCopy">Absolute budget + approved golden regression</text>
+  </g>
+
+  <!-- bottom delivery -->
+  <text x="70" y="856" class="section">05 · EVIDENCE, GOLDEN &amp; PRESENTATION</text>
+  <g>
+    <rect x="70" y="880" width="320" height="72" rx="16" fill="#fff" stroke="#e1ddec"/>
+    <text x="92" y="910" class="cardTitle">Report · JSON · Excel · eval</text>
+    <text x="92" y="934" class="cardCopy">Every metric links to samples, budgets and trace IDs</text>
+  </g>
+  <g>
+    <rect x="420" y="880" width="320" height="72" rx="16" fill="#fff" stroke="#e1ddec"/>
+    <text x="442" y="910" class="cardTitle">Approved golden JSON</text>
+    <text x="442" y="934" class="cardCopy">Immutable · human promoted · environment matched</text>
+  </g>
+  <g>
+    <rect x="770" y="880" width="350" height="72" rx="16" fill="#fff" stroke="#e1ddec"/>
+    <text x="792" y="910" class="cardTitle">Prometheus + Tempo</text>
+    <text x="792" y="934" class="cardCopy">Low-cardinality metrics · correlated traces</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1150" y="866" width="380" height="100" rx="20" fill="url(#hero)"/>
+    <text x="1178" y="906" font-family="Inter,Arial" font-size="20" font-weight="700" fill="#fff">Grafana: current vs golden</text>
+    <text x="1178" y="933" font-family="Inter,Arial" font-size="12" fill="#ded8ff">Page · feature · component · backend drill-down</text>
+  </g>
+
+  <path d="M1360 797 L1360 866" class="line"/>
+  <path d="M390 916 L420 916" class="line"/>
+  <path d="M740 916 L770 916" class="line"/>
+  <path d="M1120 916 L1150 916" class="line"/>
+</svg>

@@ -1,0 +1,83 @@
+{
+  "meta": {
+    "product": "PR-UX Assurance",
+    "environment": "Stage · eu-west-1",
+    "build": "stageui-2.18.4",
+    "goldenBuild": "stageui-2.17.9",
+    "capturedAt": "2026-09-30T12:32:00Z"
+  },
+  "profiles": [
+    {
+      "id": "page-blogs",
+      "type": "page",
+      "name": "My Blogs",
+      "target": "/blogs",
+      "description": "Authenticated route load with a representative 50-post dataset.",
+      "iterations": 5,
+      "virtualUsers": 1,
+      "budgets": { "p50": 420, "p90": 650, "p95": 760, "errorRate": 0.5 },
+      "golden": { "p50": 338, "p90": 506, "p95": 582 },
+      "current": { "p50": 374, "p90": 612, "p95": 718, "errorRate": 0 },
+      "samples": [352, 374, 401, 612, 718],
+      "trace": {
+        "id": "8fa2d9c0c77a",
+        "duration": 718,
+        "services": [
+          { "name": "Browser /blogs", "duration": 718, "start": 0, "color": "violet", "detail": "Navigation, hydration and largest contentful paint" },
+          { "name": "stageui-web", "duration": 174, "start": 28, "color": "blue", "detail": "GET /blogs route and template composition" },
+          { "name": "blog-api", "duration": 282, "start": 216, "color": "cyan", "detail": "GET /api/posts?limit=50" },
+          { "name": "postgres", "duration": 138, "start": 294, "color": "amber", "detail": "SELECT posts with tags and author join" },
+          { "name": "client render", "duration": 198, "start": 510, "color": "green", "detail": "Render list, filters and interaction-ready state" }
+        ]
+      }
+    },
+    {
+      "id": "feature-tag-filter",
+      "type": "feature",
+      "name": "Tag filtering",
+      "target": "BLOG-104 · AC-01",
+      "description": "Filter interaction from click through refreshed result list.",
+      "iterations": 8,
+      "virtualUsers": 1,
+      "budgets": { "p50": 180, "p90": 280, "p95": 340, "errorRate": 0.5 },
+      "golden": { "p50": 142, "p90": 221, "p95": 256 },
+      "current": { "p50": 158, "p90": 267, "p95": 319, "errorRate": 0 },
+      "samples": [146, 153, 158, 162, 181, 224, 267, 319],
+      "trace": {
+        "id": "2bd3188c11e4",
+        "duration": 319,
+        "services": [
+          { "name": "Playwright action", "duration": 319, "start": 0, "color": "violet", "detail": "Select tag to stable filtered result" },
+          { "name": "stageui-web", "duration": 44, "start": 12, "color": "blue", "detail": "Dispatch selection and update query state" },
+          { "name": "blog-api", "duration": 121, "start": 66, "color": "cyan", "detail": "GET /api/posts?tag=ai" },
+          { "name": "postgres", "duration": 64, "start": 92, "color": "amber", "detail": "Tag membership lookup" },
+          { "name": "DOM reconciliation", "duration": 112, "start": 198, "color": "green", "detail": "Repaint filtered cards and result count" }
+        ]
+      }
+    },
+    {
+      "id": "component-post-card",
+      "type": "component",
+      "name": "Post card",
+      "target": "Figma 2:14 · PostCard",
+      "description": "Isolated component render using the approved story fixture.",
+      "iterations": 10,
+      "virtualUsers": 3,
+      "budgets": { "p50": 75, "p90": 110, "p95": 135, "errorRate": 0.5 },
+      "golden": { "p50": 54, "p90": 88, "p95": 101 },
+      "current": { "p50": 68, "p90": 126, "p95": 148, "errorRate": 0 },
+      "samples": [49, 55, 61, 65, 68, 73, 91, 108, 126, 148],
+      "trace": {
+        "id": "d71b0af6e243",
+        "duration": 148,
+        "services": [
+          { "name": "Component mount", "duration": 148, "start": 0, "color": "violet", "detail": "Mount to settled visual state" },
+          { "name": "fixture adapter", "duration": 18, "start": 6, "color": "blue", "detail": "Normalize post and author properties" },
+          { "name": "avatar asset", "duration": 71, "start": 30, "color": "cyan", "detail": "Decode and resize author avatar" },
+          { "name": "reading-time", "duration": 23, "start": 54, "color": "amber", "detail": "Compute and format metadata" },
+          { "name": "layout + paint", "duration": 39, "start": 106, "color": "green", "detail": "Card layout and final paint" }
+        ]
+      }
+    }
+  ]
+}

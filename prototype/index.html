@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive performance assurance presentation prototype">
+  <title>PR-UX Performance Assurance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <aside class="sidebar">
+    <a class="brand" href="#" aria-label="Assurance home">
+      <span class="brand-mark"><span></span></span>
+      <span>PR•UX</span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <a class="nav-item" href="#"><span class="nav-icon">⌂</span><span>Overview</span></a>
+      <a class="nav-item active" href="#"><span class="nav-icon">⌁</span><span>Performance</span></a>
+      <a class="nav-item" href="#"><span class="nav-icon">✓</span><span>Assurance</span></a>
+      <a class="nav-item" href="#"><span class="nav-icon">◇</span><span>Golden runs</span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="avatar">VK</div>
+      <div><strong>Vivek</strong><small>Quality platform</small></div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div>
+        <div class="eyebrow"><span class="live-dot"></span> PERFORMANCE ASSURANCE</div>
+        <h1>Prove every interaction is fast.</h1>
+        <p>Set intent-aware budgets, compare against a trusted golden run, and follow regressions into the backend.</p>
+      </div>
+      <div class="environment">
+        <span>Environment</span>
+        <strong id="environment">Loading fixture…</strong>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <div class="config-panel card">
+        <div class="section-heading">
+          <div><span class="step">01</span><h2>Configure scope</h2></div>
+          <span class="status-chip neutral">DRAFT PROFILE</span>
+        </div>
+
+        <fieldset class="scope-picker">
+          <legend>Performance scope</legend>
+          <label><input type="radio" name="scope" value="page" checked><span><b>Page</b><small>Route + dependencies</small></span></label>
+          <label><input type="radio" name="scope" value="feature"><span><b>Feature</b><small>User interaction</small></span></label>
+          <label><input type="radio" name="scope" value="component"><span><b>Component</b><small>Isolated render</small></span></label>
+        </fieldset>
+
+        <label class="field-label" for="profile">Test profile</label>
+        <select id="profile" class="select"></select>
+        <div class="profile-note" id="profile-note"></div>
+
+        <div class="form-grid">
+          <label>Iterations<input id="iterations" type="number" min="3" max="25"></label>
+          <label>Virtual users<input id="virtual-users" type="number" min="1" max="20"></label>
+        </div>
+
+        <div class="budget-header"><span>Latency budgets</span><span>milliseconds</span></div>
+        <div class="budget-grid">
+          <label><span>p50</span><input id="budget-p50" type="number"></label>
+          <label><span>p90</span><input id="budget-p90" type="number"></label>
+          <label><span>p95</span><input id="budget-p95" type="number"></label>
+        </div>
+
+        <button class="run-button" id="run-button">
+          <span class="play">▶</span><span id="run-label">Run sample test</span>
+        </button>
+        <p class="fixture-line"><span></span> Local fixture · deterministic presentation mode</p>
+      </div>
+
+      <div class="results-panel card">
+        <div class="section-heading">
+          <div><span class="step">02</span><h2>Run & compare</h2></div>
+          <span class="status-chip ready" id="run-status">READY</span>
+        </div>
+
+        <div class="run-progress" id="run-progress" aria-live="polite">
+          <div class="progress-copy"><span id="progress-title">Waiting for a run</span><span id="progress-count">0 / 5</span></div>
+          <div class="progress-track"><span id="progress-bar"></span></div>
+          <div class="iteration-dots" id="iteration-dots"></div>
+        </div>
+
+        <div class="metric-grid" id="metrics">
+          <article class="metric" data-percentile="p50">
+            <div class="metric-title"><span>p50</span><span class="budget-badge"></span></div>
+            <strong class="metric-value">—</strong>
+            <div class="comparison"><span class="current-bar"></span><i></i><span class="golden-bar"></span></div>
+            <div class="comparison-labels"><span>Current</span><span>Golden <b class="golden-value">—</b></span></div>
+          </article>
+          <article class="metric" data-percentile="p90">
+            <div class="metric-title"><span>p90</span><span class="budget-badge"></span></div>
+            <strong class="metric-value">—</strong>
+            <div class="comparison"><span class="current-bar"></span><i></i><span class="golden-bar"></span></div>
+            <div class="comparison-labels"><span>Current</span><span>Golden <b class="golden-value">—</b></span></div>
+          </article>
+          <article class="metric" data-percentile="p95">
+            <div class="metric-title"><span>p95</span><span class="budget-badge"></span></div>
+            <strong class="metric-value">—</strong>
+            <div class="comparison"><span class="current-bar"></span><i></i><span class="golden-bar"></span></div>
+            <div class="comparison-labels"><span>Current</span><span>Golden <b class="golden-value">—</b></span></div>
+          </article>
+        </div>
+
+        <button class="trace-summary" id="trace-toggle" aria-expanded="false" disabled>
+          <span class="trace-icon">⌁</span>
+          <span><small>Slowest iteration</small><strong id="trace-summary-text">Run a test to inspect the trace</strong></span>
+          <span class="trace-cta">View trace <b>→</b></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="trace-panel card" id="trace-panel" hidden>
+      <div class="section-heading trace-heading">
+        <div><span class="step">03</span><h2>Trace drill-down</h2></div>
+        <div class="trace-meta"><span>OTel trace</span><code id="trace-id"></code><button id="trace-close" aria-label="Close trace">×</button></div>
+      </div>
+      <div class="trace-layout">
+        <div class="waterfall">
+          <div class="axis"><span>0 ms</span><span>25%</span><span>50%</span><span>75%</span><span id="axis-max">—</span></div>
+          <div id="spans"></div>
+        </div>
+        <aside class="finding">
+          <span class="finding-label">ASSURANCE FINDING</span>
+          <h3 id="finding-title">Within budget</h3>
+          <p id="finding-copy"></p>
+          <div class="telemetry-links"><span>Prometheus metrics</span><span>Tempo trace</span><span>Grafana overlay</span></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: UiQualityEvaluator
+    orgId: 1
+    folder: UI Quality
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards

@@ -426,6 +426,65 @@ def _evaluate_approved_coverage(data: dict[str, Any]) -> dict[str, Any]:
     return _check(not problems, approved=len(cases), problems=problems)
 
 
+def _evaluate_performance(run_dir: Path, results: Any) -> dict[str, Any] | None:
+    if not isinstance(results, dict) or results.get("performance") is None:
+        return None
+    path = run_dir / "performance.json"
+    payload, error = _read_json(path) if path.is_file() else (None, "missing")
+    problems = []
+    if error:
+        problems.append(f"performance.json: {error}")
+    elif not isinstance(payload, dict):
+        problems.append("performance.json root must be an object")
+    else:
+        summaries = payload.get("summaries", [])
+        samples = payload.get("samples", [])
+        if not isinstance(summaries, list):
+            problems.append("summaries must be a list")
+            summaries = []
+        if not isinstance(samples, list):
+            problems.append("samples must be a list")
+            samples = []
+        sample_counts: dict[tuple[str, str], int] = {}
+        for sample in samples:
+            if not isinstance(sample, dict):
+                problems.append("performance sample must be an object")
+                continue
+            profile_id = sample.get("profile_id")
+            metric = sample.get("metric")
+            if not isinstance(profile_id, str) or not isinstance(metric, str):
+                problems.append("performance sample missing profile_id or metric")
+                continue
+            sample_counts[(profile_id, metric)] = sample_counts.get((profile_id, metric), 0) + 1
+        for summary in summaries:
+            profile_id = summary.get("profile_id", "<unknown>") if isinstance(summary, dict) else "<invalid>"
+            if not isinstance(summary, dict):
+                problems.append("performance summary must be an object")
+                continue
+            if summary.get("status") not in {"PASS", "WARN", "FAIL", "UNSTABLE", "NOT_MEASURED"}:
+                problems.append(f"{profile_id}: invalid performance status")
+            statistics = summary.get("statistics", {})
+            if not isinstance(statistics, dict):
+                problems.append(f"{profile_id}: statistics must be an object")
+                continue
+            for metric, values in statistics.items():
+                if not isinstance(values, dict) or values.get("count", 0) < 1:
+                    problems.append(f"{profile_id}/{metric}: no samples")
+                    continue
+                retained = sample_counts.get((profile_id, metric), 0)
+                if retained < int(values.get("count", 0)):
+                    problems.append(
+                        f"{profile_id}/{metric}: summary count exceeds retained raw samples"
+                    )
+            for budget in summary.get("budgets", []):
+                if not isinstance(budget, dict) or not isinstance(budget.get("passed"), bool):
+                    problems.append(f"{profile_id}: malformed budget outcome")
+        emitted = results.get("performance") or {}
+        if emitted.get("summaries") != payload.get("summaries"):
+            problems.append("results.json performance summary differs from performance.json")
+    return _check(not problems, artifact=str(path.name), problems=problems)
+
+
 def evaluate_run(
     run_dir: str | Path,
     gold_path: str | Path | None = None,
@@ -460,6 +519,9 @@ def evaluate_run(
     }
     if isinstance(results, dict) and "approved_cases" in results.get("meta", {}):
         checks["approved_coverage"] = _evaluate_approved_coverage(results)
+    performance = _evaluate_performance(root, results)
+    if performance is not None:
+        checks["performance"] = performance
     passed_count = sum(bool(check["passed"]) for check in checks.values())
     evaluation = {
         "schema_version": 1,

@@ -1,0 +1,231 @@
+{
+  "version": 1,
+  "enabled": false,
+  "auto_run_with_approved_tests": false,
+  "fail_on_regression": true,
+  "require_baseline": false,
+  "export": {
+    "prometheus_remote_write_url": "http://127.0.0.1:9090/api/v1/write",
+    "otlp_endpoint": "http://127.0.0.1:4318",
+    "grafana_url": "http://127.0.0.1:3000",
+    "export_raw_samples": true
+  },
+  "profiles": [
+    {
+      "id": "blogs-page",
+      "description": "Cold and warm performance for the authenticated blogs page",
+      "scope": "page",
+      "selector": {
+        "page": "/blogs"
+      },
+      "path": "/blogs",
+      "measurements": [
+        {
+          "id": "navigation",
+          "start": "navigation",
+          "end": {
+            "kind": "network-idle",
+            "timeout_ms": 10000
+          }
+        }
+      ],
+      "browser": {
+        "cache_modes": ["cold", "warm"],
+        "warmups": 1,
+        "iterations": 5
+      },
+      "budgets": [
+        {
+          "metric": "navigation.wall_ms.warm",
+          "statistic": "p90",
+          "max_value": 2000,
+          "max_regression_percent": 15
+        },
+        {
+          "metric": "navigation.lcp_ms.warm",
+          "statistic": "p90",
+          "max_value": 2500,
+          "severity": "warn"
+        }
+      ],
+      "integrations": {
+        "playwright": true,
+        "k6_browser": false,
+        "k6_protocol": false,
+        "lighthouse": false,
+        "opentelemetry": false,
+        "benchmarkdotnet": false,
+        "grafana_export": false
+      },
+      "tags": {
+        "page": "blogs"
+      }
+    },
+    {
+      "id": "tag-filter-feature",
+      "description": "Filter interaction and backend request timing",
+      "scope": "feature",
+      "selector": {
+        "feature": "tag-filter"
+      },
+      "steps": [
+        {
+          "action": "goto",
+          "path": "/blogs"
+        },
+        {
+          "action": "select",
+          "target": {
+            "label": "Filter by tags"
+          },
+          "value": "ai"
+        }
+      ],
+      "measurements": [
+        {
+          "id": "filter",
+          "start": "before-action",
+          "action_index": 1,
+          "end": {
+            "kind": "network-idle",
+            "timeout_ms": 10000
+          }
+        }
+      ],
+      "browser": {
+        "cache_modes": ["warm"],
+        "warmups": 1,
+        "iterations": 5
+      },
+      "budgets": [
+        {
+          "metric": "filter.interaction_ms.warm",
+          "statistic": "p95",
+          "max_value": 1000,
+          "max_regression_percent": 15
+        }
+      ],
+      "tags": {
+        "feature": "tag-filter"
+      }
+    },
+    {
+      "id": "tag-filter-component",
+      "description": "Component-level response time for the tag filter",
+      "scope": "component",
+      "selector": {
+        "component": "tag-filter"
+      },
+      "path": "/blogs",
+      "steps": [
+        {
+          "action": "select",
+          "target": {
+            "label": "Filter by tags"
+          },
+          "value": "travel"
+        }
+      ],
+      "measurements": [
+        {
+          "id": "tag-filter",
+          "start": "before-action",
+          "action_index": 0,
+          "end": {
+            "kind": "network-idle",
+            "timeout_ms": 10000
+          }
+        }
+      ],
+      "browser": {
+        "cache_modes": ["warm"],
+        "warmups": 1,
+        "iterations": 5
+      },
+      "budgets": [
+        {
+          "metric": "tag-filter.interaction_ms.warm",
+          "statistic": "p95",
+          "max_value": 1000,
+          "severity": "warn"
+        }
+      ],
+      "tags": {
+        "component": "tag-filter"
+      }
+    },
+    {
+      "id": "blogs-api-protocol",
+      "enabled": false,
+      "description": "Optional k6 protocol profile for the blogs API backing the list page",
+      "scope": "api",
+      "selector": {
+        "feature": "post-list"
+      },
+      "path": "/api/posts",
+      "browser": {
+        "cache_modes": ["warm"],
+        "warmups": 0,
+        "iterations": 10
+      },
+      "budgets": [
+        {
+          "metric": "http_req_duration",
+          "statistic": "p95",
+          "max_value": 1000
+        }
+      ],
+      "integrations": {
+        "playwright": false,
+        "k6_protocol": true
+      },
+      "tool_options": {
+        "method": "GET",
+        "path": "/api/posts",
+        "vus": 5,
+        "duration": "30s"
+      },
+      "tags": {
+        "feature": "post-list",
+        "service": "blog-api"
+      }
+    },
+    {
+      "id": "blogs-read-load",
+      "enabled": false,
+      "description": "Optional load profile for sustained read traffic against the blogs API",
+      "scope": "load",
+      "selector": {
+        "page": "/blogs"
+      },
+      "path": "/api/posts",
+      "browser": {
+        "cache_modes": ["warm"],
+        "warmups": 0,
+        "iterations": 25
+      },
+      "budgets": [
+        {
+          "metric": "http_req_duration",
+          "statistic": "p95",
+          "max_value": 1200
+        }
+      ],
+      "integrations": {
+        "playwright": false,
+        "k6_protocol": true
+      },
+      "tool_options": {
+        "method": "GET",
+        "path": "/api/posts",
+        "vus": 20,
+        "duration": "1m",
+        "prometheus_remote_write_url": "http://127.0.0.1:9090/api/v1/write"
+      },
+      "tags": {
+        "page": "blogs",
+        "load_profile": "read"
+      }
+    }
+  ]
+}

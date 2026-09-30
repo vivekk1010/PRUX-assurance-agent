@@ -193,6 +193,94 @@ def cmd_plans(settings, story: str | None) -> int:
     return 0
 
 
+def cmd_performance(
+    settings, action: str, *, profiles: list[str] | None = None,
+    story: str | None = None, feature: str | None = None,
+    page: str | None = None, component: str | None = None,
+    run_id: str | None = None, approved_by: str | None = None,
+    start_stage: bool = False,
+) -> int:
+    from agent.performance.baselines import PerformanceBaselineStore
+    from agent.performance.models import PerformanceRun
+    from agent.performance.profiles import PerformanceProfileRegistry
+
+    registry = PerformanceProfileRegistry.from_file(settings.performance_config)
+    if action == "list":
+        print(
+            f"performance {'enabled' if (settings.performance_enabled or registry.config.enabled) else 'disabled'} "
+            f"({settings.performance_config})"
+        )
+        for profile in registry.config.profiles:
+            print(
+                f"{profile.id:28} scope={profile.scope:9} "
+                f"{'enabled' if profile.enabled else 'disabled'}"
+            )
+        return 0
+    if action == "promote":
+        if not run_id or not profiles or len(profiles) != 1 or not approved_by:
+            print("promote requires --run, exactly one --profile, and --approved-by", file=sys.stderr)
+            return 2
+        source_dir = settings.runs_dir / run_id
+        evaluation_path = source_dir / "eval.json"
+        if not evaluation_path.exists() or not json.loads(evaluation_path.read_text(encoding="utf-8")).get("passed"):
+            print("baseline promotion requires a run with a passing eval.json", file=sys.stderr)
+            return 2
+        performance_path = source_dir / "performance.json"
+        if not performance_path.exists():
+            print(f"run {run_id} has no performance.json to promote", file=sys.stderr)
+            return 2
+        performance = PerformanceRun.model_validate_json(
+            performance_path.read_text(encoding="utf-8")
+        )
+        summary = next((item for item in performance.summaries if item.profile_id == profiles[0]), None)
+        if summary is None:
+            print(f"profile {profiles[0]} was not measured in run {run_id}", file=sys.stderr)
+            return 2
+        baseline, path = PerformanceBaselineStore(settings.performance_baselines_dir).promote(
+            summary, source_run_id=run_id, approved_by=approved_by
+        )
+        print(f"Promoted {baseline.id}: {path}")
+        return 0
+
+    from agent.performance.runner import PerformanceRunner
+    from agent.reporting.evaluate_run import evaluate_run
+    from agent.reporting.report import write_reports
+
+    with stage_session(settings, start_stage) as up:
+        if not up:
+            return 2
+        actual_run_id = datetime.now().strftime("%Y%m%d-%H%M%S-perf")
+        run_dir = settings.runs_dir / actual_run_id
+        run_dir.mkdir(parents=True, exist_ok=True)
+        context = {
+            "story": story, "feature": feature, "page": page, "component": component,
+        }
+        performance = PerformanceRunner(settings, registry).run(
+            run_dir, run_id=actual_run_id, profile_ids=profiles,
+            context=context, force=True,
+        )
+        meta = {
+            "run_id": actual_run_id, "author": "Vivek Kaushik",
+            "stage_base_url": settings.stage_base_url,
+            "llm_provider": "none", "llm_model": "performance-only",
+            "ux_source": "n/a", "embedder": "n/a",
+        }
+        payload = performance.model_dump(mode="json")
+        write_reports(run_dir, [], meta, [], [], performance=payload)
+        evaluation = evaluate_run(run_dir)
+        meta["evaluation"] = evaluation
+        report = write_reports(run_dir, [], meta, [], [], performance=payload)
+        (settings.runs_dir / "LATEST").write_text(actual_run_id, encoding="utf-8")
+        print(f"Performance report: {report}")
+        fail_on_regression = (
+            settings.performance_fail_on_regression
+            and registry.config.fail_on_regression
+        )
+        return 3 if fail_on_regression and not performance.passed else (
+            0 if evaluation["passed"] else 3
+        )
+
+
 def cmd_run_approved(
     settings, *, story: str | None, frame: str | None, feature: str | None,
     reset: bool, start_stage: bool, allow_stale: bool,
@@ -238,6 +326,20 @@ def cmd_run_approved(
             plan_ids.append(plan.id)
 
         selector = {"story": story, "frame": frame, "feature": feature}
+        from agent.performance.profiles import PerformanceProfileRegistry
+        from agent.performance.runner import PerformanceRunner
+
+        registry = PerformanceProfileRegistry.from_file(settings.performance_config)
+        performance = None
+        if (
+            (settings.performance_enabled or registry.config.enabled)
+            and (settings.performance_auto_run or registry.config.auto_run_with_approved_tests)
+        ):
+            performance = PerformanceRunner(settings, registry).run(
+                run_dir, run_id=run_id,
+                context={"story": story, "frame": frame, "feature": feature},
+            )
+        performance_payload = performance.model_dump(mode="json") if performance else None
         meta = {
             "run_id": run_id, "author": "Vivek Kaushik", "stage_base_url": settings.stage_base_url,
             "llm_provider": settings.llm_provider, "llm_model": settings.llm_model,
@@ -254,12 +356,18 @@ def cmd_run_approved(
             ],
             "plan_sources_fresh": True,
         }
-        report = write_reports(run_dir, results, meta, [settings.stage_password], [])
+        report = write_reports(
+            run_dir, results, meta, [settings.stage_password], [],
+            performance=performance_payload,
+        )
         from agent.adapters import get_adapter
         from agent.reporting.evaluate_run import evaluate_run
         evaluation = evaluate_run(run_dir, secrets=get_adapter(settings).secrets())
         meta["evaluation"] = evaluation
-        report = write_reports(run_dir, results, meta, get_adapter(settings).secrets(), [])
+        report = write_reports(
+            run_dir, results, meta, get_adapter(settings).secrets(), [],
+            performance=performance_payload,
+        )
         from agent.excel_io import append_execution_results
         for plan in plans:
             if plan.id not in plan_ids:
@@ -270,6 +378,7 @@ def cmd_run_approved(
                 [result for result in results if result.story_key == plan.story_key],
                 evaluation,
                 get_adapter(settings).secrets(),
+                performance_payload,
             )
         (settings.runs_dir / "LATEST").write_text(run_id, encoding="utf-8")
         print(f"Report: {report}")
@@ -367,10 +476,24 @@ def main(argv=None) -> int:
     p_chat = sub.add_parser("chat", help="chat with the agent in plain English; it decides which checks to run")
     p_chat.add_argument("--headed", action="store_true", help="show the browser during checks")
     p_chat.add_argument("--once", action="append", metavar="QUESTION", help="ask one question and exit (repeatable)")
+    p_perf = sub.add_parser("performance", help="run or manage configurable performance profiles")
+    p_perf.add_argument("action", choices=["list", "run", "promote"])
+    p_perf.add_argument("--profile", action="append", dest="profiles")
+    perf_selector = p_perf.add_mutually_exclusive_group()
+    perf_selector.add_argument("--story")
+    perf_selector.add_argument("--feature")
+    perf_selector.add_argument("--page")
+    perf_selector.add_argument("--component")
+    p_perf.add_argument("--run", dest="run_id")
+    p_perf.add_argument("--approved-by")
+    p_perf.add_argument("--start-stage", action="store_true")
+    p_perf.add_argument("--headed", action="store_true")
     args = parser.parse_args(argv)
 
     settings = get_settings()
-    if args.cmd in {"run", "run-approved", "conformance", "chat"}:
+    if args.cmd in {"run", "run-approved", "conformance", "chat"} or (
+        args.cmd == "performance" and args.action == "run"
+    ):
         from agent.adapters import get_adapter
         adapter = get_adapter(settings)
         if settings.target_auth_method == "form" and adapter.login_steps() and not settings.stage_password:
@@ -392,6 +515,15 @@ def main(argv=None) -> int:
         return cmd_review(settings, args.action, args.story, args.file, args.version)
     elif args.cmd == "plans":
         return cmd_plans(settings, args.story)
+    elif args.cmd == "performance":
+        if args.headed:
+            settings.headless = False
+        return cmd_performance(
+            settings, args.action, profiles=args.profiles,
+            story=args.story, feature=args.feature, page=args.page,
+            component=args.component, run_id=args.run_id,
+            approved_by=args.approved_by, start_stage=args.start_stage,
+        )
     elif args.cmd == "run-approved":
         return cmd_run_approved(
             settings, story=args.story, frame=args.frame, feature=args.feature,

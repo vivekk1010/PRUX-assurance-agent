@@ -223,12 +223,13 @@ def append_execution_results(
     story_results: list,
     evaluation: dict,
     secrets: Iterable[str] = (),
+    performance: dict | None = None,
 ) -> Path:
     """Add replaceable execution and evaluation sheets to a review workbook."""
     if not path.is_file():
         return path
     workbook = load_workbook(path)
-    for name in ("Results", "Evaluation"):
+    for name in ("Results", "Evaluation", "Performance"):
         if name in workbook.sheetnames:
             del workbook[name]
     results_sheet = workbook.create_sheet("Results")
@@ -250,5 +251,24 @@ def append_execution_results(
         _reject_unsafe(details, secrets)
         eval_sheet.append([name, bool(check.get("passed")), _safe_cell(details)])
     eval_sheet.append(["overall", bool(evaluation.get("passed")), ""])
+    if performance:
+        perf_sheet = workbook.create_sheet("Performance")
+        perf_sheet.append([
+            "profile", "scope", "status", "metric", "count",
+            "median", "p90", "p95", "p99", "cv", "budget",
+        ])
+        for summary in performance.get("summaries", []):
+            budgets = {
+                item.get("metric"): item for item in summary.get("budgets", [])
+            }
+            for metric, stats in summary.get("statistics", {}).items():
+                budget = budgets.get(metric, {})
+                detail = budget.get("reason", "")
+                _reject_unsafe(detail, secrets)
+                perf_sheet.append([
+                    summary.get("profile_id"), summary.get("scope"), summary.get("status"),
+                    metric, stats.get("count"), stats.get("median"), stats.get("p90"),
+                    stats.get("p95"), stats.get("p99"), stats.get("cv"), _safe_cell(detail),
+                ])
     workbook.save(path)
     return path

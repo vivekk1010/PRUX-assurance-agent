@@ -34,7 +34,8 @@ def _run_cli(*args: str, start_stage: bool = True) -> str | dict:
                           cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if proc.returncode != 0:
         return {"error": proc.stderr[-2000:] or proc.stdout[-2000:]}
-    return (get_settings().runs_dir / "LATEST").read_text(encoding="utf-8").strip()
+    latest = get_settings().runs_dir / "LATEST"
+    return latest.read_text(encoding="utf-8").strip() if latest.exists() else ""
 
 
 @mcp.tool()
@@ -114,6 +115,55 @@ def run_approved_tests(story: str | None = None, frame: str | None = None, featu
     if isinstance(run_id, dict):
         return run_id
     return {"run_id": run_id, "report": str(get_settings().runs_dir / run_id / "report.html")}
+
+
+@mcp.tool()
+def list_performance_profiles() -> list[dict]:
+    """List configured page, feature, component, API, and load performance profiles."""
+    from agent.performance.profiles import PerformanceProfileRegistry
+
+    settings = get_settings()
+    registry = PerformanceProfileRegistry.from_file(settings.performance_config)
+    return [
+        {
+            "id": profile.id,
+            "scope": profile.scope,
+            "enabled": profile.enabled,
+            "selector": profile.selector.model_dump(exclude_none=True),
+            "integrations": profile.integrations.model_dump(),
+        }
+        for profile in registry.config.profiles
+    ]
+
+
+@mcp.tool()
+def run_performance_profile(profile_id: str) -> dict:
+    """Run one explicitly configured performance profile and return its deterministic summary."""
+    run_id = _run_cli("performance", "run", "--profile", profile_id)
+    if isinstance(run_id, dict):
+        return run_id
+    path = get_settings().runs_dir / run_id / "performance.json"
+    if not path.exists():
+        return {"error": "performance run did not create performance.json"}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@mcp.tool()
+def get_performance_results(run_id: str | None = None) -> dict:
+    """Read performance results for a run, defaulting to the latest run."""
+    settings = get_settings()
+    if run_id is None:
+        latest = settings.runs_dir / "LATEST"
+        if not latest.exists():
+            return {"error": "no run exists"}
+        run_id = latest.read_text(encoding="utf-8").strip()
+    root = (settings.runs_dir / run_id).resolve()
+    if root.parent != settings.runs_dir.resolve():
+        return {"error": "invalid run id"}
+    path = root / "performance.json"
+    if not path.exists():
+        return {"error": f"run {run_id} has no performance results"}
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _configured_registry():

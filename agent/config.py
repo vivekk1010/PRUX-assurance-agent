@@ -65,12 +65,32 @@ class Settings:
     max_recovery_attempts: int = field(default_factory=lambda: int(os.getenv("MAX_RECOVERY_ATTEMPTS", "2")))
     headless: bool = field(default_factory=lambda: _bool("HEADLESS", True))
     step_timeout_ms: int = field(default_factory=lambda: int(os.getenv("STEP_TIMEOUT_MS", "5000")))
+    performance_enabled: bool = field(default_factory=lambda: _bool("PERFORMANCE_ENABLED", False))
+    performance_auto_run: bool = field(default_factory=lambda: _bool("PERFORMANCE_AUTO_RUN", False))
+    performance_fail_on_regression: bool = field(
+        default_factory=lambda: _bool("PERFORMANCE_FAIL_ON_REGRESSION", True)
+    )
+    performance_require_baseline: bool = field(
+        default_factory=lambda: _bool("PERFORMANCE_REQUIRE_BASELINE", False)
+    )
+    performance_min_samples: int = field(
+        default_factory=lambda: int(os.getenv("PERFORMANCE_MIN_SAMPLES", "3"))
+    )
+    performance_max_cv: float = field(
+        default_factory=lambda: float(os.getenv("PERFORMANCE_MAX_CV", "0.35"))
+    )
 
     stories_dir: Path = ROOT / "stories"
     knowledge_dir: Path = ROOT / "knowledge_base"
     rag_index_dir: Path = field(default_factory=lambda: ROOT / os.getenv("RAG_INDEX_DIR", ".rag_index"))
     runs_dir: Path = field(default_factory=lambda: ROOT / os.getenv("RUNS_DIR", "runs"))
     test_plans_dir: Path = field(default_factory=lambda: ROOT / os.getenv("TEST_PLANS_DIR", "test_plans"))
+    performance_config: Path = field(
+        default_factory=lambda: ROOT / os.getenv("PERFORMANCE_CONFIG", "config/performance.json")
+    )
+    performance_baselines_dir: Path = field(
+        default_factory=lambda: ROOT / os.getenv("PERFORMANCE_BASELINES_DIR", "performance-baselines")
+    )
     replay_dir: Path = ROOT / "llm" / "replay"
     prompts_dir: Path = ROOT / "llm" / "prompts"
 

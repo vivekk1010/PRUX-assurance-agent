@@ -8,6 +8,8 @@ It reads the story and the Figma file (over MCP), grounds itself in engineering 
 
 - Product requirements: [docs/prd/001-stageui-requirement-assurance-agent.md](docs/prd/001-stageui-requirement-assurance-agent.md)
 - Architecture: [docs/architecture/architecture.md](docs/architecture/architecture.md)
+- Pluggable platform PRD: [docs/prd/002-pluggable-assurance-platform.md](docs/prd/002-pluggable-assurance-platform.md)
+- Pluggable architecture and detailed design: [docs/architecture/002-pluggable-assurance-platform.md](docs/architecture/002-pluggable-assurance-platform.md)
 - Demo video: [DemoCapstoneProject.7z](DemoCapstoneProject.7z) (7-Zip archive with the recorded walkthrough, `DemoCapstoneProject.mp4`)
 
 ## Verdict labels
@@ -208,6 +210,10 @@ In-chat commands: `/headed` (show or hide the browser), `/usage` (tokens so far)
 | `python -m agent generate --story BLOG-104 --excel` | Generate a versioned draft test plan and human-review workbook without opening the target app |
 | `python -m agent review import --story BLOG-104 --file test_plans/BLOG-104/v1.xlsx` | Validate reviewed steps and import approvals into the canonical JSON plan |
 | `python -m agent plans [--story BLOG-104]` | List plan versions and review status counts |
+| `python -m agent performance list` | List configurable page, feature, component, API and load profiles |
+| `python -m agent performance run --profile blogs-page --start-stage` | Run a controlled profile and produce performance evidence |
+| `python -m agent performance run --feature tag-filter` | Resolve and run the enabled profile for a feature |
+| `python -m agent performance promote --run <id> --profile blogs-page --approved-by <name>` | Human-promote a stable passing run to the golden baseline |
 | `python -m agent run-approved --story BLOG-104 --start-stage` | Execute only approved cases for a story |
 | `python -m agent run-approved --frame "My Blogs"` | Execute approved cases linked to a Figma frame |
 | `python -m agent run-approved --feature tag-filter` | Execute approved cases linked to a stable product feature |
@@ -234,6 +240,35 @@ The recommended workflow separates test design from execution:
 5. The workbook receives Results and Evaluation sheets after execution. JSON remains the canonical executable format.
 
 Every run now finishes with a deterministic artifact audit in `eval.json`. It checks selected-case coverage, AC classification, evidence files, label consistency, report integrity and secret leakage. A failed audit returns exit code 3; it never changes PASS/GAP/DEFECT/RISK verdicts.
+
+## Optional performance assurance
+
+Performance is disabled by default. Set `PERFORMANCE_ENABLED=true`, or invoke
+`python -m agent performance run ...` explicitly. Profiles live in
+`config/performance.json` and can target a page, feature, component, API, or
+load scenario. They configure cold/warm cache, viewport, CPU/network profile,
+warm-ups, measured iterations, settled-state conditions, tools, and absolute
+or golden-regression budgets.
+
+The built-in Playwright collector records raw iterations and page/interaction
+metrics without functional screenshots or traces. Optional integrations are:
+
+- k6 browser for Web Vitals and repeatable user journeys;
+- k6 protocol for backend concurrency and load;
+- Lighthouse CI for page audits and resource budgets;
+- OpenTelemetry for frontend-to-backend trace correlation;
+- BenchmarkDotNet JSON as linked evidence for isolated .NET hot paths.
+
+Each run writes `performance.json`, per-profile summaries and raw samples,
+`performance/metrics.prom`, report tables, evaluation status, and an optional
+Performance worksheet. Performance status is separate from functional labels:
+`PASS`, `WARN`, `FAIL`, `UNSTABLE`, or `NOT_MEASURED`.
+
+Golden promotion is an explicit human action and requires a passing
+`eval.json`. Baselines under `performance-baselines/` are immutable and tied to
+an environment fingerprint. The optional stack in `observability/` runs local
+Grafana, Prometheus, Tempo, and OpenTelemetry Collector with a provisioned
+current-versus-golden dashboard.
 
 ## Pointing at another web application
 

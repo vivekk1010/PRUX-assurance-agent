@@ -1,0 +1,137 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"drawStyle": "line", "fillOpacity": 12, "lineWidth": 2},
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 16, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "${metric}{profile_id=~\"$profile\",run_kind=\"current\"}",
+          "legendFormat": "current {{profile_id}}",
+          "refId": "A"
+        },
+        {
+          "editorMode": "code",
+          "expr": "${metric}{profile_id=~\"$profile\",run_kind=\"baseline\"}",
+          "legendFormat": "golden {{profile_id}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Current vs approved golden",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 8, "x": 16, "y": 0},
+      "id": 2,
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"]}},
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "ui_quality_performance_status{profile_id=~\"$profile\"}",
+          "legendFormat": "{{profile_id}} · {{status}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Performance status",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "ms"}, "overrides": []},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 9},
+      "id": 3,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}},
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "{__name__=~\"ui_quality_.*(lcp|fcp|inp|ttfb).*_p90\",profile_id=~\"$profile\"}",
+          "legendFormat": "{{__name__}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Page Web Vitals p90",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 9},
+      "id": 4,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}},
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "{__name__=~\"ui_quality_.*_cv\",profile_id=~\"$profile\"}",
+          "legendFormat": "{{profile_id}} · {{__name__}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Measurement stability (coefficient of variation)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["ui-quality", "performance", "golden"],
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {"selected": true, "text": "All", "value": "$__all"},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "definition": "label_values(ui_quality_performance_status, profile_id)",
+        "includeAll": true,
+        "label": "Profile",
+        "name": "profile",
+        "query": {"query": "label_values(ui_quality_performance_status, profile_id)", "refId": "PrometheusVariableQueryEditor-Profile"},
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {"selected": false, "text": "ui_quality_navigation_wall_ms_warm_p95", "value": "ui_quality_navigation_wall_ms_warm_p95"},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "definition": "label_values({__name__=~\"ui_quality_.*_p95\"}, __name__)",
+        "includeAll": false,
+        "label": "Metric",
+        "name": "metric",
+        "query": {"query": "label_values({__name__=~\"ui_quality_.*_p95\"}, __name__)", "refId": "PrometheusVariableQueryEditor-Metric"},
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "browser",
+  "title": "UI Quality Performance: Current vs Golden",
+  "uid": "ui-quality-performance",
+  "version": 1
+}
