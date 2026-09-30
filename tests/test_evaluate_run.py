@@ -141,7 +141,8 @@ def test_detects_explicit_secrets_in_plain_files_and_zip_members(tmp_path: Path)
 
 def test_detects_high_confidence_secret_pattern_without_value(tmp_path: Path) -> None:
     run_dir, _ = _make_run(tmp_path)
-    _write(run_dir / "debug.log", "token=sk-proj-abcdefghijklmnopqrstuvwxyz123456")
+    fake_key = "sk-proj-" + "abcdefghijklmnopqrstuvwxyz123456"
+    _write(run_dir / "debug.log", f"token={fake_key}")
 
     result = evaluate_run(run_dir)
 

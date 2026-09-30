@@ -38,17 +38,24 @@ OPENAI_API_KEY=...
 python -m requirements_alchemist
 ```
 
-For Ollama or vLLM:
+For locally hosted Ollama, install [Ollama](https://ollama.com/download), then use the
+repository launcher. It checks the server and model before starting the app.
 
-```bash
-RA_LLM_PROVIDER=openai-compatible
-RA_LLM_BASE_URL=http://127.0.0.1:11434/v1
-RA_LLM_MODEL=qwen2.5:14b
-python -m requirements_alchemist
+```powershell
+# Windows PowerShell; -Pull downloads qwen2.5:7b the first time
+.\scripts\run-requirements-alchemist-ollama.ps1 -Pull
 ```
 
-The local model must support reliable JSON-object output. Larger instruction models
-generally produce more complete decomposition and traceability.
+```bash
+# Linux/macOS
+./scripts/run-requirements-alchemist-ollama.sh --pull
+```
+
+The default local profile is `qwen2.5:7b` at `http://127.0.0.1:11434/v1`. Override
+`RA_LLM_MODEL` (or pass `-Model qwen2.5:14b` on Windows) for a larger model. Model files stay
+in Ollama's local storage and are never committed to GitHub. The local model must support
+reliable JSON-object output; larger instruction models generally produce more complete
+decomposition and traceability.
 
 For a keyless recording, select **Load guided demo** in the UI. It loads a bundled expense
 reimbursement PRD and three detailed draft stories. The complete recording script is

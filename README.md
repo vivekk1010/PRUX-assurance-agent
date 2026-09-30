@@ -11,6 +11,7 @@ It reads the story and the Figma file (over MCP), grounds itself in engineering 
 - Pluggable platform PRD: [docs/prd/002-pluggable-assurance-platform.md](docs/prd/002-pluggable-assurance-platform.md)
 - Pluggable architecture and detailed design: [docs/architecture/002-pluggable-assurance-platform.md](docs/architecture/002-pluggable-assurance-platform.md)
 - Local advisory evaluation enhancement: [docs/enhancements/001-local-advisory-output-evaluation.md](docs/enhancements/001-local-advisory-output-evaluation.md)
+- Complete design reference (every component, inputs/outputs, flows, performance, real run results): [docs/design/prux-assurance-agent-complete-reference.md](docs/design/prux-assurance-agent-complete-reference.md) ([PDF](docs/design/prux-assurance-agent-complete-reference.pdf))
 - Requirements Alchemist app: [requirements_alchemist/README.md](requirements_alchemist/README.md)
 - Figma/PRD-to-story PRD: [docs/prd/003-requirements-alchemist.md](docs/prd/003-requirements-alchemist.md)
 - Requirements Alchemist detailed design: [docs/architecture/004-requirements-alchemist.md](docs/architecture/004-requirements-alchemist.md)

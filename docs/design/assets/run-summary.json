@@ -1,0 +1,41 @@
+{
+  "run_id": "20261001-001801",
+  "llm_provider": "replay",
+  "embedder": "hashing-512",
+  "stories": {
+    "BLOG-101": "PASS",
+    "BLOG-102": "PASS",
+    "BLOG-103": "DEFECT",
+    "BLOG-104": "GAP",
+    "BLOG-105": "RISK"
+  },
+  "frames": {
+    "Login": "PASS",
+    "My Blogs": "GAP",
+    "New Post": "PASS"
+  },
+  "ac_labels": {
+    "PASS": 12,
+    "DEFECT": 1,
+    "GAP": 1,
+    "RISK": 1
+  },
+  "scenarios": 16,
+  "steps": 107,
+  "eval_passed": true,
+  "evidence_references": 213,
+  "performance_run_id": "20261001-002514-perf",
+  "performance_samples": 210,
+  "performance_status": {
+    "blogs-page": "UNSTABLE",
+    "tag-filter-feature": "PASS"
+  },
+  "performance_unstable": {
+    "blogs-page": [
+      "navigation.api_max_duration_ms.cold",
+      "navigation.api_total_duration_ms.cold"
+    ],
+    "tag-filter-feature": []
+  },
+  "performance_eval_passed": true
+}

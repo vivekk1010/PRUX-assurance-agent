@@ -3,7 +3,7 @@ import json
 import pytest
 
 from requirements_alchemist.app import create_app
-from requirements_alchemist.config import Settings
+from requirements_alchemist.config import ROOT, Settings
 from requirements_alchemist.generation import RequirementsLLM
 from requirements_alchemist.models import (
     AcceptanceCriterion,
@@ -80,6 +80,18 @@ def test_reference_corpus_retrieves_licensed_story_pattern(tmp_path):
 
     assert hits[0].source_id == "reference-access"
     assert hits[0].metadata["license"] == "CC0-1.0"
+
+
+def test_local_ollama_profile_is_keyless_and_write_safe(monkeypatch):
+    for name in ("RA_LLM_PROVIDER", "RA_LLM_MODEL", "RA_LLM_BASE_URL"):
+        monkeypatch.delenv(name, raising=False)
+    settings = Settings.load(ROOT / "config" / "requirements-alchemist.ollama.json")
+
+    assert settings.llm_provider == "openai-compatible"
+    assert settings.llm_model == "qwen2.5:7b"
+    assert settings.llm_base_url == "http://127.0.0.1:11434/v1"
+    assert settings.jira_push_enabled is False
+    assert settings.require_human_approval is True
 
 
 def test_excel_review_only_updates_review_fields(tmp_path):

@@ -15,14 +15,14 @@ From the repository root:
 The committed configuration starts in keyless `replay` mode. No Figma, Atlassian, or LLM
 credentials are required for the guided demo. Keep Jira publishing disabled while recording.
 
-For live synthesized chat/generation, configure a local or hosted model before starting:
+For live synthesized chat/generation with locally hosted Ollama:
 
-```bash
-RA_LLM_PROVIDER=openai-compatible
-RA_LLM_BASE_URL=http://127.0.0.1:11434/v1
-RA_LLM_MODEL=qwen2.5:14b
-.venv/Scripts/python.exe -m requirements_alchemist
+```powershell
+.\scripts\run-requirements-alchemist-ollama.ps1 -Pull
 ```
+
+The first run downloads `qwen2.5:7b`; later runs omit `-Pull`. Model inference and prompts
+remain on the machine.
 
 ## Recording script
 

@@ -1,0 +1,30 @@
+{
+  "name": "Requirements Alchemist · Local Ollama",
+  "host": "127.0.0.1",
+  "port": 5070,
+  "debug": false,
+  "llm_provider": "openai-compatible",
+  "llm_model": "qwen2.5:7b",
+  "llm_base_url": "http://127.0.0.1:11434/v1",
+  "llm_api_key_env": "OLLAMA_API_KEY",
+  "llm_timeout_seconds": 180,
+  "llm_temperature": 0.1,
+  "source_max_chars": 120000,
+  "source_max_download_bytes": 5000000,
+  "retrieval_top_k": 6,
+  "reference_dir": "requirements_alchemist/reference_data",
+  "workspace_dir": ".requirements-alchemist",
+  "output_dir": "generated_stories",
+  "allowed_source_hosts": [
+    "api.figma.com",
+    "www.figma.com"
+  ],
+  "figma_token_env": "FIGMA_ACCESS_TOKEN",
+  "atlassian_base_url": "",
+  "atlassian_email_env": "ATLASSIAN_EMAIL",
+  "atlassian_token_env": "ATLASSIAN_API_TOKEN",
+  "jira_project_key": "",
+  "jira_issue_type": "Story",
+  "jira_push_enabled": false,
+  "require_human_approval": true
+}
