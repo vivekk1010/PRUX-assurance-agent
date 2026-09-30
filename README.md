@@ -163,6 +163,8 @@ flowchart LR
 
 Python 3.10+ (tested with 3.14). No GPU needed.
 
+One-step install: `.\scripts\install.ps1` (Windows) or `./scripts/install.sh` (Linux, macOS, Git Bash) creates `.venv`, installs the Python packages and Playwright Chromium, and creates `.env`. Optional components are opt-in: `-WithEvaluation`, `-WithOllama`, `-PullModel`, `-WithK6`, `-WithLighthouse`, `-WithObservability` or `-All` (bash: `--with-evaluation`, `--all`, ...); add `-Test` / `--test` to run the tests. The manual steps are:
+
 ```powershell
 cd C:\Scaler\Cohort\PR-UX-assurance-agent
 py -3.14 -m venv .venv
