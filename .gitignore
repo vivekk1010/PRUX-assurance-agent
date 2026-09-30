@@ -11,6 +11,8 @@ __pycache__/
 .figma_cache/
 runs/
 test_plans/
+.requirements-alchemist/
+generated_stories/
 stageui_app/instance/
 evals/results/
 *.log

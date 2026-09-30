@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf }}">
+  <title>{{ app_name }}</title>
+  <style>
+    :root { --ink:#18212f; --muted:#64748b; --line:#dbe4ee; --paper:#fff; --wash:#f3f7fb;
+      --brand:#5235d1; --brand2:#0f8b8d; --danger:#b42318; --ok:#087443; }
+    * { box-sizing:border-box } body { margin:0; color:var(--ink); background:var(--wash);
+      font:14px/1.45 Inter,ui-sans-serif,system-ui,sans-serif }
+    header { padding:28px 34px; color:white; background:linear-gradient(115deg,#26165f,#5235d1 56%,#0f8b8d) }
+    header h1 { margin:0 0 5px; font:700 27px/1.2 Georgia,serif } header p { margin:0; opacity:.84 }
+    .shell { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(320px,.75fr); gap:18px;
+      max-width:1450px; margin:auto; padding:20px }
+    .card { background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:18px;
+      box-shadow:0 5px 20px #3341550c; margin-bottom:18px }
+    h2 { font-size:17px; margin:0 0 13px } h3 { font-size:15px; margin:15px 0 8px }
+    label { display:block; color:#334155; font-weight:650; margin:9px 0 5px }
+    input,textarea,select { width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:9px 10px;
+      color:var(--ink); background:white; font:inherit } textarea { min-height:105px; resize:vertical }
+    button,.button { border:0; border-radius:8px; padding:9px 13px; cursor:pointer; background:var(--brand);
+      color:white; font-weight:680; text-decoration:none; display:inline-block }
+    button.secondary,.button.secondary { color:var(--ink); background:#e8eef5 }
+    button.danger { background:var(--danger) } button:disabled { opacity:.45; cursor:not-allowed }
+    .row { display:flex; gap:9px; align-items:end; flex-wrap:wrap } .row > * { flex:1 }
+    .actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap }
+    .source,.story { border:1px solid var(--line); border-radius:10px; padding:12px; margin:9px 0 }
+    .source small,.meta { color:var(--muted) } .pill { display:inline-block; border-radius:99px;
+      padding:2px 8px; background:#ece9ff; color:#3d2aa7; font-size:12px; margin:2px }
+    .status-APPROVED { color:var(--ok) } .status-REJECTED { color:var(--danger) }
+    details { margin:9px 0 } summary { cursor:pointer; font-weight:650 }
+    .story ul { margin:6px 0 8px; padding-left:20px } .story blockquote { border-left:3px solid var(--brand);
+      margin:9px 0; padding:5px 11px; color:#334155 }
+    #notice { position:fixed; right:20px; top:20px; max-width:440px; border-radius:9px; padding:11px 14px;
+      color:white; background:#263445; display:none; z-index:10 }
+    .chat { position:sticky; top:18px } #messages { height:455px; overflow:auto; padding:5px;
+      border:1px solid var(--line); border-radius:9px; background:#f8fafc }
+    .message { margin:8px; padding:9px 11px; border-radius:10px; white-space:pre-wrap }
+    .user { margin-left:36px; background:#e9e4ff } .assistant { margin-right:24px; background:white; border:1px solid var(--line) }
+    .source-links { font-size:11px; color:var(--muted); margin-top:5px }
+    .empty { color:var(--muted); padding:14px; text-align:center } .loader { opacity:.55; pointer-events:none }
+    @media(max-width:900px){ .shell{grid-template-columns:1fr}.chat{position:static} }
+  </style>
+</head>
+<body>
+<header>
+  <h1>{{ app_name }}</h1>
+  <p>Transform grounded product intent into human-reviewed, Jira-ready stories · {{ provider }} / {{ model }}</p>
+</header>
+<div id="notice"></div>
+<main class="shell">
+  <section>
+    <div class="card">
+      <h2>1 · Assemble product evidence</h2>
+      <div class="row">
+        <div><label for="sourceTitle">PRD title</label><input id="sourceTitle" placeholder="Checkout modernization PRD"></div>
+        <div><label for="sourceUrl">Figma, Confluence, Jira, or HTTPS PRD URL</label><input id="sourceUrl" placeholder="https://…"></div>
+      </div>
+      <label for="sourceText">Paste PRD or requirement text</label>
+      <textarea id="sourceText" placeholder="Paste detailed product requirements here…"></textarea>
+      <div class="actions">
+        <button onclick="addText()">Add pasted PRD</button>
+        <button class="secondary" onclick="addUrl()">Import URL</button>
+        <label class="button secondary" style="margin:0">Upload file
+          <input id="sourceFile" type="file" accept=".txt,.md,.json,.yaml,.yml" hidden onchange="uploadSource()">
+        </label>
+      </div>
+      <div id="sources" class="empty">No evidence loaded.</div>
+    </div>
+
+    <div class="card">
+      <h2>2 · Generate an evidence-traceable backlog</h2>
+      <div class="row">
+        <div><label for="backlogTitle">Backlog title</label><input id="backlogTitle" value="Generated product backlog"></div>
+        <div><label for="objective">Product objective</label><input id="objective" placeholder="Outcome this backlog must deliver"></div>
+      </div>
+      <label for="referenceQuery">Exemplary-story RAG query (optional)</label>
+      <input id="referenceQuery" placeholder="accessibility, permissions, auditability, workflow…">
+      <div class="actions"><button onclick="generate()">Generate stories</button></div>
+    </div>
+
+    <div class="card">
+      <div class="row"><h2 style="flex:3">3 · Human review and delivery</h2>
+        <a class="button secondary" href="/api/export/excel">Export Excel</a>
+        <a class="button secondary" href="/api/export/assurance">Export approved for assurance</a>
+        <button class="secondary" onclick="document.getElementById('reviewFile').click()">Import review</button>
+        <input id="reviewFile" type="file" accept=".xlsx" hidden onchange="importReview()">
+        <button {% if not jira_enabled %}disabled title="Enable Jira publishing in configuration"{% endif %}
+          onclick="publishJira()">Push approved to Jira</button>
+      </div>
+      <div id="package" class="empty">Generate a package to begin review.</div>
+    </div>
+  </section>
+
+  <aside>
+    <div class="card chat">
+      <h2>Grounded requirements chat</h2>
+      <p class="meta">Ask about the loaded PRD, Figma, Confluence, Jira evidence, generated stories, gaps, or dependencies.</p>
+      <div id="messages"><div class="empty">Answers cite retrieved workspace sources.</div></div>
+      <label for="chatInput">Question</label>
+      <textarea id="chatInput" style="min-height:74px" placeholder="Which requirements remain ambiguous?"></textarea>
+      <div class="actions"><button onclick="chat()">Ask copilot</button><button class="secondary" onclick="resetWorkspace()">Reset</button></div>
+    </div>
+  </aside>
+</main>
+<script>
+const csrf = document.querySelector('meta[name=csrf-token]').content;
+let state = {sources:[], package:null};
+const $ = id => document.getElementById(id);
+function notice(message,error=false){const n=$('notice');n.textContent=message;n.style.background=error?'#b42318':'#263445';n.style.display='block';setTimeout(()=>n.style.display='none',5000)}
+async function api(url,options={}){
+  options.headers={...(options.headers||{}),'X-CSRF-Token':csrf};
+  if(options.body && !(options.body instanceof FormData)) options.headers['Content-Type']='application/json';
+  document.body.classList.add('loader');
+  try { const r=await fetch(url,options); const data=await r.json().catch(()=>({error:r.statusText}));
+    if(!r.ok) throw new Error(data.error||r.statusText); return data;
+  } finally {document.body.classList.remove('loader')}
+}
+function escapeHtml(value){const d=document.createElement('div');d.textContent=value??'';return d.innerHTML.replaceAll('"','&quot;').replaceAll("'","&#39;")}
+async function refresh(){state=await api('/api/state');renderSources();renderPackage()}
+function renderSources(){
+  $('sources').innerHTML=state.sources.length?state.sources.map(s=>`<div class="source">
+    <strong>${escapeHtml(s.title)}</strong> <span class="pill">${escapeHtml(s.kind)}</span>
+    <button class="danger" style="float:right;padding:3px 8px" onclick="removeSource('${encodeURIComponent(s.id)}')">Remove</button>
+    <div><small>${escapeHtml(s.url||s.id)} · ${s.text.length.toLocaleString()} characters</small></div></div>`).join(''):
+    '<div class="empty">No evidence loaded.</div>';
+}
+function list(title,values){return values?.length?`<h3>${title}</h3><ul>${values.map(v=>`<li>${escapeHtml(v)}</li>`).join('')}</ul>`:''}
+function renderPackage(){
+  const p=state.package;if(!p){$('package').innerHTML='<div class="empty">Generate a package to begin review.</div>';return}
+  $('package').innerHTML=`<h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.objective)}</p>
+    <div class="meta">${p.stories.length} stories · ${p.unresolved_questions.length} package questions · ${escapeHtml(p.id)}</div>`+
+    p.stories.map(s=>`<article class="story"><div><span class="pill">${escapeHtml(s.local_id)}</span>
+      <span class="pill">${escapeHtml(s.priority)}</span> <strong>${escapeHtml(s.title)}</strong>
+      <strong class="status-${s.review_status}" style="float:right">${escapeHtml(s.review_status)}</strong></div>
+      <blockquote>${escapeHtml(s.narrative)}</blockquote><p>${escapeHtml(s.description)}</p>
+      <details><summary>${s.acceptance_criteria.length} acceptance criteria</summary>${s.acceptance_criteria.map(a=>
+        `<p><strong>${escapeHtml(a.id)} · ${escapeHtml(a.title)}</strong><br>GIVEN ${escapeHtml(a.given.join(' AND '))}
+        <br>WHEN ${escapeHtml(a.when)}<br>THEN ${escapeHtml(a.then.join(' AND '))}</p>`).join('')}</details>
+      ${list('Open questions',s.open_questions)}${list('Non-functional requirements',s.non_functional_requirements.map(n=>`${n.category}: ${n.requirement} — ${n.measure}`))}
+      <div class="row"><div><label>Review status</label><select id="status-${s.local_id}">
+        ${['DRAFT','APPROVED','NEEDS_CHANGE','REJECTED'].map(v=>`<option ${v===s.review_status?'selected':''}>${v}</option>`).join('')}</select></div>
+        <div><label>Reviewer</label><input id="reviewer-${s.local_id}" value="${escapeHtml(s.reviewer)}"></div></div>
+      <label>Review comment</label><input id="comment-${s.local_id}" value="${escapeHtml(s.review_comment)}">
+      <div class="actions"><button onclick="review('${s.local_id}')">Save review</button>
+      <button class="secondary" ${s.review_status!=='APPROVED'?'disabled':''} onclick="reference('${s.local_id}')">Add approved story to RAG</button></div>
+    </article>`).join('');
+}
+async function addText(){try{const d=await api('/api/sources/text',{method:'POST',body:JSON.stringify({title:$('sourceTitle').value,text:$('sourceText').value})});state.sources.push(d);$('sourceText').value='';renderSources()}catch(e){notice(e.message,true)}}
+async function addUrl(){try{const d=await api('/api/sources/url',{method:'POST',body:JSON.stringify({url:$('sourceUrl').value})});state.sources.push(d);$('sourceUrl').value='';renderSources()}catch(e){notice(e.message,true)}}
+async function uploadSource(){try{const f=new FormData();f.append('file',$('sourceFile').files[0]);const d=await api('/api/sources/upload',{method:'POST',body:f});state.sources.push(d);renderSources()}catch(e){notice(e.message,true)}}
+async function removeSource(id){try{await api('/api/sources/'+id,{method:'DELETE'});await refresh()}catch(e){notice(e.message,true)}}
+async function generate(){try{state.package=await api('/api/generate',{method:'POST',body:JSON.stringify({title:$('backlogTitle').value,objective:$('objective').value,reference_query:$('referenceQuery').value})});renderPackage();notice('Draft story package generated')}catch(e){notice(e.message,true)}}
+async function review(id){try{const s=await api('/api/stories/'+id+'/review',{method:'PATCH',body:JSON.stringify({status:$('status-'+id).value,reviewer:$('reviewer-'+id).value,comment:$('comment-'+id).value})});const i=state.package.stories.findIndex(x=>x.local_id===id);state.package.stories[i]=s;renderPackage();notice('Review saved')}catch(e){notice(e.message,true)}}
+async function reference(id){try{await api('/api/stories/'+id+'/reference',{method:'POST',body:'{}'});notice('Approved story added to local RAG references')}catch(e){notice(e.message,true)}}
+async function importReview(){try{const f=new FormData();f.append('file',$('reviewFile').files[0]);state.package=await api('/api/review/import',{method:'POST',body:f});renderPackage();notice('Human review imported')}catch(e){notice(e.message,true)}}
+async function publishJira(){if(!confirm('Create Jira issues for all approved, unpublished stories?'))return;try{const r=await api('/api/publish/jira',{method:'POST',body:'{}'});await refresh();notice(r.map(x=>`${x.local_id}: ${x.status}${x.jira_key?' '+x.jira_key:''}`).join(' · '))}catch(e){notice(e.message,true)}}
+async function chat(){const q=$('chatInput').value.trim();if(!q)return;const m=$('messages');if(m.querySelector('.empty'))m.innerHTML='';m.innerHTML+=`<div class="message user">${escapeHtml(q)}</div>`;$('chatInput').value='';try{const r=await api('/api/chat',{method:'POST',body:JSON.stringify({message:q})});m.innerHTML+=`<div class="message assistant">${escapeHtml(r.answer)}<div class="source-links">${r.sources.map(s=>escapeHtml(s.id)).join(' · ')}</div></div>`;m.scrollTop=m.scrollHeight}catch(e){notice(e.message,true)}}
+async function resetWorkspace(){if(!confirm('Clear loaded sources, generated stories, and chat history?'))return;try{await api('/api/workspace/reset',{method:'POST',body:'{}'});await refresh();notice('Workspace reset')}catch(e){notice(e.message,true)}}
+refresh().catch(e=>notice(e.message,true));
+</script>
+</body>
+</html>

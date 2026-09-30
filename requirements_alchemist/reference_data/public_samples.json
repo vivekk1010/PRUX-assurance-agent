@@ -1,0 +1,26 @@
+[
+  {
+    "id": "reference-cruise-ac-528",
+    "title": "New user registration",
+    "text": "USER STORY\nAs a user, I would like to be able to register as a new user.\n\nORIGINAL ACCEPTANCE CRITERIA\nNo acceptance criteria were supplied in the dataset record. Treat this as a useful example of an incomplete story and ask for validation, identity, consent, security, and recovery decisions.",
+    "license": "CC-BY-4.0",
+    "provenance": "Stefan Schwedt (2025), CrUISE-AC data and results, User stories e-commerce.xlsx, Project A, ID 528, DOI 10.5281/zenodo.14709846. Verbatim story plus an explicitly marked Requirements Alchemist quality note.",
+    "source_url": "https://zenodo.org/records/14709846"
+  },
+  {
+    "id": "reference-cruise-ac-530",
+    "title": "Password reset with time limit",
+    "text": "USER STORY\nAs a user, I would like to be able to reset my password.\n\nORIGINAL ACCEPTANCE CRITERION\nValidity period 30 minutes, must be communicated.\n\nQUALITY NOTE\nThe source provides a measurable expiry but leaves identity proof, one-time use, invalidation, privacy-safe responses, rate limiting, auditability, and accessible recovery unresolved.",
+    "license": "CC-BY-4.0",
+    "provenance": "Stefan Schwedt (2025), CrUISE-AC data and results, User stories e-commerce.xlsx, Project A, ID 530, DOI 10.5281/zenodo.14709846. Verbatim story/criterion plus an explicitly marked Requirements Alchemist quality note.",
+    "source_url": "https://zenodo.org/records/14709846"
+  },
+  {
+    "id": "reference-cruise-ac-538",
+    "title": "Search autocompletion",
+    "text": "USER STORY\nAs customer, I want to have an autocompletion when I type in the search slot.\n\nORIGINAL ACCEPTANCE CRITERIA\nSince the shop will have under 1000 titles, a high performance display of the search slot is expected. The appearance of the search slot will work without perceived delay. If I change my search word, the changed search result appears immediately.\n\nQUALITY NOTE\nThe criteria express intent but use subjective timing. A product-specific measurable latency percentile, trigger length, ordering, empty/error behavior, keyboard behavior, and accessibility semantics remain open.",
+    "license": "CC-BY-4.0",
+    "provenance": "Stefan Schwedt (2025), CrUISE-AC data and results, User stories e-commerce.xlsx, Project A, ID 538, DOI 10.5281/zenodo.14709846. Verbatim story/criteria plus an explicitly marked Requirements Alchemist quality note.",
+    "source_url": "https://zenodo.org/records/14709846"
+  }
+]
