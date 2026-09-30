@@ -91,6 +91,9 @@ The platform must separate probabilistic reasoning from deterministic execution 
     profiles, approved golden baselines, and deterministic budgets.
 14. Correlate browser measurements with backend telemetry and visualize
     current-versus-golden trends in an optional local Grafana stack.
+15. Optionally evaluate generated recommendations and explanations with an
+    open-source DeepEval/G-Eval layer backed by local Ollama or vLLM, without
+    changing deterministic verdicts or release gates.
 
 ### 5.2 Success outcomes
 
@@ -132,6 +135,9 @@ The platform must separate probabilistic reasoning from deterministic execution 
     report and workbook.
 15. CI succeeds only when the configured functional, artifact-evaluation, and
     performance policies pass.
+16. When enabled, the advisory evaluator scores recommendation consistency and
+    evidence grounding, writes `advisory-eval.json`, and may export OTLP spans
+    to a self-hosted Opik or Langfuse deployment.
 
 ## 8. Functional requirements
 
@@ -246,7 +252,17 @@ The platform must separate probabilistic reasoning from deterministic execution 
 | FR-093 | Reports, JSON, Excel, MCP, and artifact evaluation shall expose performance summaries and baseline outcomes. |
 | FR-094 | Time-series labels shall use bounded stable identifiers and shall not include user data, raw dynamic URLs, or secrets. |
 
-### 8.10 Optional Claude Agent SDK harness
+### 8.10 Optional open-source advisory evaluation
+
+| ID | Requirement |
+|---|---|
+| FR-095 | Advisory output evaluation shall be disabled by default and configurable through environment and versioned JSON. |
+| FR-096 | The initial engine shall use DeepEval G-Eval with explicit versioned criteria, evaluation steps, and thresholds. |
+| FR-097 | Ollama, vLLM, and remote OpenAI-compatible judge endpoints shall be supported without coupling the primary application LLM to the evaluator. |
+| FR-098 | Advisory scores, reasons, model identity, provider, thresholds, errors, and export status shall be written to `advisory-eval.json`, shown in the report, and optionally projected over OTLP to a local Opik, Langfuse, or generic OpenTelemetry backend. |
+| FR-099 | Advisory evaluation shall be marked non-authoritative and shall never rewrite PASS/GAP/DEFECT/RISK, performance status, `eval.json`, or CI gate results. |
+
+### 8.11 Optional Claude Agent SDK harness
 
 | ID | Requirement |
 |---|---|
@@ -272,6 +288,8 @@ The platform must separate probabilistic reasoning from deterministic execution 
 | NFR-008 | Existing StageUI gold labels and replay behavior shall remain backward compatible. |
 | NFR-009 | Reports shall be understandable by a reviewer in under five minutes per story. |
 | NFR-010 | New source, app, and harness integrations shall be isolated behind documented interfaces. |
+| NFR-011 | With advisory evaluation disabled, DeepEval and judge-model dependencies shall not be imported or required. |
+| NFR-012 | Local advisory evaluation shall require no external API key when an Ollama or vLLM endpoint is configured. |
 
 ## 10. Quality metrics
 
@@ -291,6 +309,8 @@ The platform must separate probabilistic reasoning from deterministic execution 
 | Performance budgets evaluated deterministically | 100% |
 | Golden baseline promotions with approver and matching environment | 100% |
 | High-cardinality or secret-bearing time-series labels | 0 |
+| Advisory evaluator attempts that alter deterministic verdicts | 0 |
+| Advisory metric configurations with versioned criteria and thresholds | 100% |
 
 ## 11. Release phases
 
@@ -300,7 +320,8 @@ The platform must separate probabilistic reasoning from deterministic execution 
 | 2 | Live Jira Cloud adapter and production Figma configuration | Proposed |
 | 3 | Optional Claude Agent SDK harness and harness-comparison evals | Proposed |
 | 4 | Performance profiles, controlled browser collector, baselines, report/eval integration, local Grafana stack | Implemented on feature branch |
-| 5 | Distributed load agents and organization-level plugin packaging | Future |
+| 5 | Configurable DeepEval/G-Eval advisory evaluation with local judges and optional OTLP dashboard export | Implemented on feature branch |
+| 6 | Distributed load agents and organization-level plugin packaging | Future |
 
 ## 12. Acceptance criteria
 
@@ -323,6 +344,12 @@ The platform must separate probabilistic reasoning from deterministic execution 
 13. Deliberately missing evidence or an injected secret causes artifact evaluation to fail.
 14. The reference suite and replay smoke remain green.
 15. When the Claude harness is introduced, it can complete the same approved workflow without direct shell/browser access and without changing deterministic verdicts.
+16. With advisory evaluation disabled, existing runs behave identically and do
+    not require DeepEval.
+17. With advisory evaluation enabled against a local judge, each story receives
+    configured G-Eval scores in `advisory-eval.json` and `report.html`.
+18. Advisory failures or low scores remain visible but cannot change
+    deterministic labels or the authoritative artifact-evaluation result.
 
 ## 13. Risks and mitigations
 
@@ -340,6 +367,9 @@ The platform must separate probabilistic reasoning from deterministic execution 
 | Performance noise creates false regressions | Controlled environment fingerprints, warm-ups, repeated samples, variance status, and distribution comparison |
 | Dashboard becomes the only baseline record | Canonical approved JSON baseline; Grafana remains a projection |
 | Time-series cardinality or telemetry leaks data | Stable bounded labels, local endpoints, secret scrubbing, and artifact metadata for run/trace IDs |
+| LLM judge is biased, unstable, or overconfident | Keep scores advisory; pin metric/model configuration; calibrate against human labels; route uncertainty to review |
+| Optional evaluator dependency breaks normal execution | Lazy imports, disabled-by-default configuration, fail-open policy, separate optional requirements file |
+| Evaluation data leaks to a hosted platform | Default to local Ollama/vLLM and localhost OTLP; require explicit remote endpoint and key configuration |
 
 ## 14. Configuration ownership
 
@@ -355,6 +385,8 @@ The platform must separate probabilistic reasoning from deterministic execution 
 | Performance profiles and budgets | QA lead / service owner |
 | Golden baseline promotion | Named human approver |
 | Grafana, Prometheus, Tempo, and OTel retention/access | Platform engineer |
+| Advisory metric criteria, thresholds, and calibration set | QA lead / product owner |
+| Local judge model and Opik/Langfuse deployment | Platform engineer |
 
 ## 15. Open decisions
 

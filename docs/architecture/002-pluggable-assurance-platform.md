@@ -9,14 +9,15 @@
 
 ## 1. Architecture objectives
 
-The architecture separates six concerns that must not collapse into one autonomous loop:
+The architecture separates seven concerns that must not collapse into one autonomous loop:
 
 1. source ingestion and grounding;
 2. test planning and human approval;
 3. safe target execution;
 4. deterministic classification and evidence;
 5. controlled performance measurement and observability;
-6. orchestration by a replaceable agent harness.
+6. optional non-authoritative model-based output evaluation;
+7. orchestration by a replaceable agent harness.
 
 The core invariant is:
 
@@ -61,6 +62,10 @@ flowchart LR
     Performance --> Reports
     Reports --> Evaluator[Artifact evaluator]
     Evaluator --> Gate[CI quality gate]
+    Reports --> Advisory[Optional DeepEval / G-Eval]
+    Advisory --> Review[Advisory scores and human review]
+    Advisory --> EvalOTel[OTLP score spans]
+    EvalOTel --> EvalDashboard[Opik / Langfuse / OTel backend]
 ```
 
 ## 3. Runtime modes
@@ -102,6 +107,7 @@ flowchart LR
 | Artifact evaluator | Audit report consistency, evidence, coverage, gold labels, and secrets |
 | Performance service | Run controlled page, feature, component, API, and load measurements; compare distributions with budgets and approved baselines |
 | Telemetry exporter | Persist low-cardinality metrics and trace links for local Grafana dashboards |
+| Advisory evaluator | Score recommendation consistency and evidence grounding with DeepEval/G-Eval while remaining outside verdict and CI authority |
 
 ## 5. Governed lifecycle
 
@@ -508,6 +514,7 @@ runs/<run-id>/
   results.json
   report.html
   eval.json
+  advisory-eval.json  # only when enabled
   figma/<frame>/
   <story>/<scenario>/
 ```
@@ -721,6 +728,52 @@ Time-series labels must remain bounded. Use stable identifiers such as
 `run_id`, commit and trace ID in exemplars or artifact metadata where supported
 rather than creating unbounded label combinations.
 
+### 13.6 Open-source advisory evaluation
+
+The deterministic classifier and artifact evaluator remain authoritative.
+DeepEval/G-Eval is an optional second pass over the already-emitted,
+secret-scrubbed `results.json`. It judges explanation quality, not product
+behavior.
+
+```mermaid
+flowchart LR
+    Results[results.json] --> Project[Bounded story projection]
+    Project --> GEval[DeepEval G-Eval metrics]
+    Config[advisory-evaluation.json] --> GEval
+    Ollama[Local Ollama] --> GEval
+    VLLM[Local vLLM] --> GEval
+    Remote[Optional OpenAI-compatible API] --> GEval
+    GEval --> Advisory[advisory-eval.json]
+    Advisory --> Report[Advisory report section]
+    Advisory --> OTLP[Optional OTLP spans]
+    OTLP --> Dashboard[Opik / Langfuse / generic backend]
+    Deterministic[eval.json + deterministic labels] --> Gate[Authoritative CI gate]
+    Advisory -. never changes .-> Gate
+```
+
+The adapter uses lazy imports so ordinary runs do not require DeepEval. Judge
+providers share an OpenAI-compatible interface:
+
+- Ollama defaults to `http://127.0.0.1:11434/v1`;
+- vLLM points to its local `/v1` endpoint;
+- a remote compatible provider reads its API key from the configured
+  environment-variable name.
+
+Each metric has a stable ID, criteria or explicit evaluation steps, threshold,
+and enabled state. The initial metrics are:
+
+1. deterministic verdict and recommendation consistency;
+2. evidence-grounded explanation quality.
+
+The output records engine, model, provider, score, threshold, reason, errors,
+and export status and explicitly serializes `authoritative: false`. A fail-open
+policy records evaluator/dependency/model failures without hiding them or
+preventing deterministic reports from completing.
+
+OTLP export emits bounded score spans to the local Collector. Opik or Langfuse
+may receive those spans when configured as downstream OpenTelemetry backends.
+The portable JSON artifact remains canonical; dashboards are projections.
+
 ## 14. Optional Claude Agent SDK harness
 
 ### 14.1 Decision
@@ -864,6 +917,18 @@ ANTHROPIC_API_KEY=
 CLAUDE_MODEL=
 ```
 
+### 15.5 Advisory evaluation
+
+```dotenv
+ADVISORY_EVALUATION_ENABLED=false
+ADVISORY_EVALUATION_CONFIG=config/advisory-evaluation.json
+ADVISORY_EVALUATION_API_KEY=
+```
+
+The JSON configuration owns the G-Eval metrics, judge provider/model/base URL,
+thresholds, fail-open behavior, and optional OTLP dashboard export. Environment
+variables only select enablement, the config path, and secrets.
+
 ## 16. Security design
 
 ### 16.1 Trust boundaries
@@ -902,6 +967,8 @@ CLAUDE_MODEL=
 | Locator missing | Bounded recovery; GAP/RISK according to observation |
 | Evidence missing | Artifact eval fails; PASS cannot be trusted |
 | Secret found | Artifact eval fails and reports detector/location without secret value |
+| Advisory dependency/model unavailable | Record ERROR in `advisory-eval.json`; deterministic report and gate remain valid |
+| Advisory score below threshold | Display warning and route for review; do not rewrite verdicts |
 
 ## 18. Test strategy
 
@@ -927,6 +994,9 @@ CLAUDE_MODEL=
 - k6 result ingestion and baseline comparison;
 - Prometheus label-cardinality policy and Grafana dashboard provisioning;
 - OpenTelemetry trace-link capture with a fixture backend.
+- advisory evaluator disabled-mode isolation and fake-judge contract;
+- G-Eval configuration validation and non-authoritative report rendering;
+- OTLP score export with a local fixture receiver.
 
 ### 18.3 Evaluation suites
 
@@ -939,6 +1009,7 @@ CLAUDE_MODEL=
 | Harness comparison | Proposed | Planning/tool/safety/cost differences |
 | Performance smoke | Proposed `python -m agent performance --profile <id>` | Page/feature/component budgets and baseline regression |
 | Performance load | Proposed k6 protocol/browser job | Latency distributions, Web Vitals, throughput, errors and saturation |
+| Advisory output quality | Automatic when enabled | Recommendation consistency and evidence grounding; never verdict authority |
 
 ## 19. Deployment topology
 
@@ -992,6 +1063,8 @@ The domain models, approval boundary, tool authorization, and deterministic clas
 | k6 integration | Proposed `agent/performance/k6_runner.py`, `performance/k6/` |
 | Baselines and statistics | Proposed `agent/performance/baselines.py`, `agent/performance/statistics.py` |
 | Local observability | Proposed `observability/compose.yaml`, provisioned Grafana dashboards, Prometheus and Tempo configuration |
+| Advisory evaluation | `agent/evaluation/`, `config/advisory-evaluation.json`, `requirements-evaluation.txt` |
+| Evaluation dashboard export | `agent/evaluation/exporters.py`, local OTLP Collector, optional Opik/Langfuse |
 
 ## 21. Architecture decisions
 
@@ -1013,3 +1086,6 @@ The domain models, approval boundary, tool authorization, and deterministic clas
 | Telemetry standard | OpenTelemetry with W3C Trace Context | Correlates browser actions with backend, database and cache spans |
 | Visualization | Local Grafana over Prometheus-compatible metrics and Tempo traces | Open source, provisionable and supports current-versus-golden overlays |
 | Golden source | Approved versioned JSON baseline | Deterministic CI comparison independent of dashboard retention/state |
+| Advisory evaluator | DeepEval G-Eval with an OpenAI-compatible local judge | Apache-licensed framework, rubric flexibility, Ollama/vLLM support, and no required hosted service |
+| Advisory authority | None; deterministic outputs remain authoritative | Model judges are probabilistic and must not redefine measured product behavior |
+| Evaluation dashboard interchange | OTLP score spans plus canonical JSON | Keeps Opik/Langfuse optional and avoids dashboard lock-in |

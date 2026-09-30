@@ -79,6 +79,9 @@ class Settings:
     performance_max_cv: float = field(
         default_factory=lambda: float(os.getenv("PERFORMANCE_MAX_CV", "0.35"))
     )
+    advisory_evaluation_enabled: bool = field(
+        default_factory=lambda: _bool("ADVISORY_EVALUATION_ENABLED", False)
+    )
 
     stories_dir: Path = ROOT / "stories"
     knowledge_dir: Path = ROOT / "knowledge_base"
@@ -90,6 +93,11 @@ class Settings:
     )
     performance_baselines_dir: Path = field(
         default_factory=lambda: ROOT / os.getenv("PERFORMANCE_BASELINES_DIR", "performance-baselines")
+    )
+    advisory_evaluation_config: Path = field(
+        default_factory=lambda: ROOT / os.getenv(
+            "ADVISORY_EVALUATION_CONFIG", "config/advisory-evaluation.json"
+        )
     )
     replay_dir: Path = ROOT / "llm" / "replay"
     prompts_dir: Path = ROOT / "llm" / "prompts"

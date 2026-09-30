@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "enabled": false,
+  "engine": "deepeval-geval",
+  "authoritative": false,
+  "fail_open": true,
+  "judge": {
+    "provider": "ollama",
+    "model": "qwen2.5:7b",
+    "base_url": "http://127.0.0.1:11434/v1",
+    "api_key_env": "ADVISORY_EVALUATION_API_KEY",
+    "timeout_seconds": 120
+  },
+  "metrics": [
+    {
+      "id": "verdict-consistency",
+      "name": "Verdict and recommendation consistency",
+      "criteria": "Determine whether the recommendation accurately reflects every deterministic acceptance-criterion label and rationale without changing or contradicting PASS, GAP, DEFECT, or RISK.",
+      "threshold": 0.8,
+      "enabled": true,
+      "evaluation_steps": [
+        "List each deterministic acceptance-criterion label.",
+        "Check that the recommendation addresses every GAP, DEFECT, and RISK.",
+        "Check that it does not describe a deterministic PASS as a failure.",
+        "Score consistency and completeness; do not reinterpret the labels."
+      ]
+    },
+    {
+      "id": "evidence-grounding",
+      "name": "Evidence-grounded explanation",
+      "criteria": "Determine whether the output makes only claims supported by the supplied deterministic rationale and evidence counts, and routes incomplete evidence to human review.",
+      "threshold": 0.75,
+      "enabled": true,
+      "evaluation_steps": [
+        "Identify the claims made by the recommendation.",
+        "Compare each claim with the supplied deterministic rationale and evidence count.",
+        "Penalize invented observations, unsupported certainty, or missing human-review guidance.",
+        "Score the degree to which the explanation stays grounded."
+      ]
+    }
+  ],
+  "dashboard_export": {
+    "enabled": false,
+    "backend": "generic-otlp",
+    "otlp_endpoint": "http://127.0.0.1:4318",
+    "fail_open": true
+  }
+}

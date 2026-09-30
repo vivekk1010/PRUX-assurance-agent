@@ -53,6 +53,40 @@
 </div>
 {% endif %}
 
+{% if advisory_evaluation and advisory_evaluation.enabled %}
+<div class="card">
+  <h2>Advisory output evaluation</h2>
+  <p>
+    <span class="label {{ 'PASS' if advisory_evaluation.meets_advisory_threshold else 'WARN' }}">
+      {{ advisory_evaluation.status }}
+    </span>
+    DeepEval/G-Eval review using {{ advisory_evaluation.provider }}:{{ advisory_evaluation.model }}.
+  </p>
+  {% if advisory_evaluation.scores %}
+  <table>
+    <tr><th>Story</th><th>Metric</th><th>Score</th><th>Threshold</th><th>Result</th><th>Reason</th></tr>
+    {% for score in advisory_evaluation.scores %}
+    <tr>
+      <td>{{ score.story_key }}</td>
+      <td>{{ score.metric_name }}</td>
+      <td>{{ score.score | round(3) }}</td>
+      <td>{{ score.threshold }}</td>
+      <td class="{{ 'ok' if score.meets_threshold else 'error' }}">{{ 'meets' if score.meets_threshold else 'below' }}</td>
+      <td>{{ score.reason }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% if advisory_evaluation.errors %}
+  <p class="muted">Warnings: {{ advisory_evaluation.errors | join('; ') }}</p>
+  {% endif %}
+  <p class="muted">
+    Full details: <a href="advisory-eval.json">advisory-eval.json</a>.
+    This model-based evaluation is non-authoritative and never changes deterministic verdicts or the CI artifact gate.
+  </p>
+</div>
+{% endif %}
+
 {% if performance and performance.enabled %}
 <div class="card">
   <h2>Performance assurance</h2>

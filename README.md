@@ -10,6 +10,7 @@ It reads the story and the Figma file (over MCP), grounds itself in engineering 
 - Architecture: [docs/architecture/architecture.md](docs/architecture/architecture.md)
 - Pluggable platform PRD: [docs/prd/002-pluggable-assurance-platform.md](docs/prd/002-pluggable-assurance-platform.md)
 - Pluggable architecture and detailed design: [docs/architecture/002-pluggable-assurance-platform.md](docs/architecture/002-pluggable-assurance-platform.md)
+- Local advisory evaluation enhancement: [docs/enhancements/001-local-advisory-output-evaluation.md](docs/enhancements/001-local-advisory-output-evaluation.md)
 - Demo video: [DemoCapstoneProject.7z](DemoCapstoneProject.7z) (7-Zip archive with the recorded walkthrough, `DemoCapstoneProject.mp4`)
 
 ## Verdict labels
@@ -269,6 +270,31 @@ Golden promotion is an explicit human action and requires a passing
 an environment fingerprint. The optional stack in `observability/` runs local
 Grafana, Prometheus, Tempo, and OpenTelemetry Collector with a provisioned
 current-versus-golden dashboard.
+
+## Optional local advisory evaluation
+
+DeepEval/G-Eval can review recommendation consistency and evidence grounding
+after deterministic execution. It is disabled by default and never changes
+PASS/GAP/DEFECT/RISK, performance status, or `eval.json`.
+
+Install the optional evaluator and enable it:
+
+```powershell
+pip install -r requirements-evaluation.txt
+$env:ADVISORY_EVALUATION_ENABLED = "true"
+python -m agent run --story BLOG-103
+```
+
+`config/advisory-evaluation.json` defaults to local Ollama at
+`http://127.0.0.1:11434/v1`. Change the provider, model, and base URL for a
+local vLLM server or an explicitly configured remote OpenAI-compatible
+endpoint. Enabled runs add `advisory-eval.json` and an advisory section to
+`report.html`.
+
+Optional OTLP export projects bounded score spans to the local Collector for a
+self-hosted Opik, Langfuse, or generic OTLP backend. The JSON artifact remains
+canonical and no recommendation text or evidence content is exported as span
+attributes.
 
 ## Pointing at another web application
 

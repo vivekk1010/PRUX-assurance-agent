@@ -361,12 +361,19 @@ def cmd_run_approved(
             performance=performance_payload,
         )
         from agent.adapters import get_adapter
+        from agent.evaluation import run_advisory_evaluation
         from agent.reporting.evaluate_run import evaluate_run
+        advisory = run_advisory_evaluation(
+            run_dir,
+            settings.advisory_evaluation_config,
+            force_enabled=settings.advisory_evaluation_enabled,
+        )
         evaluation = evaluate_run(run_dir, secrets=get_adapter(settings).secrets())
         meta["evaluation"] = evaluation
         report = write_reports(
             run_dir, results, meta, get_adapter(settings).secrets(), [],
             performance=performance_payload,
+            advisory_evaluation=advisory,
         )
         from agent.excel_io import append_execution_results
         for plan in plans:
@@ -424,10 +431,23 @@ def run_stories(settings, stories: list[str], reset: bool = True, log=print, fig
             "embedder": retriever.store.embedder_name, "figma_llm_usage": figma_usage}
     report = write_reports(run_dir, results, meta, [settings.stage_password], frames)
     from agent.adapters import get_adapter
+    from agent.evaluation import run_advisory_evaluation
     from agent.reporting.evaluate_run import evaluate_run
+    advisory = run_advisory_evaluation(
+        run_dir,
+        settings.advisory_evaluation_config,
+        force_enabled=settings.advisory_evaluation_enabled,
+    )
     evaluation = evaluate_run(run_dir, secrets=get_adapter(settings).secrets())
     meta["evaluation"] = evaluation
-    report = write_reports(run_dir, results, meta, get_adapter(settings).secrets(), frames)
+    report = write_reports(
+        run_dir,
+        results,
+        meta,
+        get_adapter(settings).secrets(),
+        frames,
+        advisory_evaluation=advisory,
+    )
     (settings.runs_dir / "LATEST").write_text(run_id, encoding="utf-8")
     log(f"\nReport: {report}")
     return run_dir, results, frames
