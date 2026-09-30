@@ -15,6 +15,7 @@ It reads the story and the Figma file (over MCP), grounds itself in engineering 
 - Figma/PRD-to-story PRD: [docs/prd/003-requirements-alchemist.md](docs/prd/003-requirements-alchemist.md)
 - Requirements Alchemist detailed design: [docs/architecture/004-requirements-alchemist.md](docs/architecture/004-requirements-alchemist.md)
 - Requirements-generation flow: [docs/diagrams/requirements-alchemist-flow.md](docs/diagrams/requirements-alchemist-flow.md)
+- Requirements Alchemist video guide: [docs/demo/requirements-alchemist-video-guide.md](docs/demo/requirements-alchemist-video-guide.md)
 - Demo video: [DemoCapstoneProject.7z](DemoCapstoneProject.7z) (7-Zip archive with the recorded walkthrough, `DemoCapstoneProject.mp4`)
 
 ## Verdict labels

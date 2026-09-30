@@ -1,0 +1,278 @@
+{
+  "id": "pkg-demo-expenses",
+  "title": "Expense reimbursement portal",
+  "objective": "Replace emailed expense spreadsheets with a secure, traceable reimbursement workflow.",
+  "source_ids": ["demo-expense-prd"],
+  "stories": [
+    {
+      "local_id": "STORY-001",
+      "epic": "Expense submission",
+      "title": "Submit a complete expense claim",
+      "persona": "employee",
+      "capability": "submit a business expense with receipt evidence",
+      "benefit": "my reimbursement can enter review without email or spreadsheets",
+      "narrative": "As an employee, I want to submit a business expense with receipt evidence, so that my reimbursement can enter review without email or spreadsheets.",
+      "business_value": "Creates a complete, traceable claim and removes manual spreadsheet intake.",
+      "description": "An employee builds a private draft, validates required claim data and receipts, and submits exactly once to the manager captured at submission.",
+      "scope_in": ["Create and update own draft", "Validate fields and receipts", "Idempotent submission", "Show status and submission time"],
+      "scope_out": ["Currency conversion", "Payment processing", "Receipt OCR"],
+      "acceptance_criteria": [
+        {
+          "id": "AC-01",
+          "title": "Save an incomplete draft",
+          "given": ["the employee is authenticated", "the claim belongs to the employee"],
+          "when": "the employee saves a partially completed claim",
+          "then": ["the draft is retained", "the claim is not sent for review", "validation identifies fields still required for submission"],
+          "negative": false,
+          "source_ids": ["demo-expense-prd"]
+        },
+        {
+          "id": "AC-02",
+          "title": "Submit a valid claim exactly once",
+          "given": ["all required fields are present", "at least one PDF, PNG, or JPEG receipt of at most 10 MB is attached", "the amount is greater than zero", "the expense date is not in the future"],
+          "when": "the employee submits the claim and retries after a network timeout",
+          "then": ["one claim enters pending manager review", "the employee-editable version is frozen", "status and submission time are visible", "no duplicate claim is created"],
+          "negative": false,
+          "source_ids": ["demo-expense-prd"]
+        },
+        {
+          "id": "AC-03",
+          "title": "Reject invalid submission",
+          "given": ["a required field or valid receipt is missing"],
+          "when": "the employee attempts submission",
+          "then": ["the claim remains a draft", "each validation error is associated with its field", "focus moves to an accessible error summary"],
+          "negative": true,
+          "source_ids": ["demo-expense-prd"]
+        }
+      ],
+      "non_functional_requirements": [
+        {
+          "category": "security",
+          "requirement": "Receipt files are encrypted in transit and at rest.",
+          "measure": "TLS is enforced and storage encryption is verified in the deployment configuration.",
+          "source_ids": ["demo-expense-prd"]
+        },
+        {
+          "category": "accessibility",
+          "requirement": "Submission and validation support WCAG 2.2 AA keyboard and screen-reader use.",
+          "measure": "Automated checks plus keyboard and screen-reader acceptance testing pass.",
+          "source_ids": ["demo-expense-prd"]
+        }
+      ],
+      "ux_requirements": ["Preserve entered values after validation", "Expose status and submission timestamp"],
+      "data_requirements": ["Store original amount and currency", "Retain receipt metadata separately from claim fields"],
+      "analytics_requirements": [],
+      "dependencies": ["Employee-to-manager relationship source"],
+      "assumptions": ["The current manager can be resolved at submission time"],
+      "risks": ["A retry without an idempotency key could create duplicate claims"],
+      "open_questions": ["Which currencies and conversion-rate source are supported?"],
+      "test_notes": ["Exercise duplicate submission with the same idempotency key", "Test 10 MB boundary and unsupported file types"],
+      "definition_of_ready": ["Currency decision is recorded", "Manager source is identified"],
+      "definition_of_done": ["All criteria pass", "Security and accessibility evidence is attached"],
+      "labels": ["expense", "submission", "demo"],
+      "story_points": 8,
+      "priority": "High",
+      "confidence": 0.94,
+      "citations": [
+        {
+          "source_id": "demo-expense-prd",
+          "source_title": "Expense reimbursement portal — demo PRD",
+          "locator": "Submission and Quality requirements",
+          "excerpt": "Submitting freezes the employee-editable version and sends the claim to the employee's current manager."
+        }
+      ],
+      "review_status": "DRAFT",
+      "reviewer": "",
+      "review_comment": "",
+      "jira_key": null
+    },
+    {
+      "local_id": "STORY-002",
+      "epic": "Manager review",
+      "title": "Approve or reject a direct report's claim",
+      "persona": "manager",
+      "capability": "review an assigned expense claim",
+      "benefit": "valid expenses progress and rejected claims return with actionable feedback",
+      "narrative": "As a manager, I want to review an assigned expense claim, so that valid expenses progress and rejected claims return with actionable feedback.",
+      "business_value": "Creates accountable approval while preventing self-approval and lost concurrent decisions.",
+      "description": "The assigned manager reviews the frozen submission, approves it, or rejects it with a mandatory explanation.",
+      "scope_in": ["Assigned direct-report claims", "Approval", "Commented rejection", "Self-review prevention", "Concurrent decision protection"],
+      "scope_out": ["Finance reassignment UI", "Payment"],
+      "acceptance_criteria": [
+        {
+          "id": "AC-01",
+          "title": "Approve an assigned claim",
+          "given": ["the claim is pending", "the manager was captured as reviewer at submission", "the manager is not the claimant"],
+          "when": "the manager approves the claim",
+          "then": ["status becomes approved", "the decision actor and time are visible", "an immutable audit event records the state change"],
+          "negative": false,
+          "source_ids": ["demo-expense-prd"]
+        },
+        {
+          "id": "AC-02",
+          "title": "Require a rejection explanation",
+          "given": ["an assigned claim is pending"],
+          "when": "the manager rejects without a comment",
+          "then": ["the rejection is not saved", "an accessible required-comment error is shown"],
+          "negative": true,
+          "source_ids": ["demo-expense-prd"]
+        },
+        {
+          "id": "AC-03",
+          "title": "Prevent self-review and stale overwrite",
+          "given": ["the manager is the claimant or another reviewer already completed the decision"],
+          "when": "the manager submits a decision",
+          "then": ["no claim state is changed", "the response explains that review is not permitted or the claim has changed", "the completed audit history remains unchanged"],
+          "negative": true,
+          "source_ids": ["demo-expense-prd"]
+        }
+      ],
+      "non_functional_requirements": [
+        {
+          "category": "security",
+          "requirement": "Authorization is checked on every review request, not only in the UI.",
+          "measure": "API tests prove unassigned and self-review requests cannot change state.",
+          "source_ids": ["demo-expense-prd"]
+        },
+        {
+          "category": "reliability",
+          "requirement": "Concurrent decisions do not overwrite a completed decision.",
+          "measure": "A stale version produces a conflict response and no second state transition.",
+          "source_ids": ["demo-expense-prd"]
+        }
+      ],
+      "ux_requirements": ["Show receipt evidence without exposing unrelated employee claims", "Require comment before enabling rejection"],
+      "data_requirements": ["Persist reviewer captured at submission", "Record previous and new state in audit event"],
+      "analytics_requirements": [],
+      "dependencies": ["STORY-001", "Role and reporting-line data"],
+      "assumptions": ["Pending claims retain the manager captured at submission"],
+      "risks": ["Reporting-line changes can leave claims assigned to departed managers"],
+      "open_questions": ["Who can reassign a claim when a manager leaves?"],
+      "test_notes": ["Run simultaneous approval and rejection requests", "Attempt direct API self-approval"],
+      "definition_of_ready": ["Reassignment owner is decided"],
+      "definition_of_done": ["Authorization and concurrency tests pass", "Audit event is verified"],
+      "labels": ["expense", "approval", "demo"],
+      "story_points": 8,
+      "priority": "High",
+      "confidence": 0.92,
+      "citations": [
+        {
+          "source_id": "demo-expense-prd",
+          "source_title": "Expense reimbursement portal — demo PRD",
+          "locator": "Manager review",
+          "excerpt": "A manager cannot review their own claim. Concurrent review attempts must not overwrite a completed decision."
+        }
+      ],
+      "review_status": "DRAFT",
+      "reviewer": "",
+      "review_comment": "",
+      "jira_key": null
+    },
+    {
+      "local_id": "STORY-003",
+      "epic": "Finance and audit",
+      "title": "Export approved unpaid claims safely",
+      "persona": "finance analyst",
+      "capability": "export approved unpaid claims",
+      "benefit": "finance can process reimbursements from a complete and auditable dataset",
+      "narrative": "As a finance analyst, I want to export approved unpaid claims, so that finance can process reimbursements from a complete and auditable dataset.",
+      "business_value": "Provides a controlled finance handoff without exposing receipt content.",
+      "description": "Finance exports the specified approved-claim fields as CSV with formula-safe text and an immutable export audit event.",
+      "scope_in": ["Approved unpaid claims", "Specified CSV columns", "Formula neutralization", "Export audit event"],
+      "scope_out": ["Receipt content", "Payment integration", "Currency conversion"],
+      "acceptance_criteria": [
+        {
+          "id": "AC-01",
+          "title": "Export the approved unpaid population",
+          "given": ["the actor has the finance analyst role", "approved unpaid claims exist"],
+          "when": "the analyst requests a CSV export",
+          "then": ["the file contains only approved unpaid claims", "all PRD-specified columns are present", "receipt content is absent", "an export audit event records actor, time, and claim scope"],
+          "negative": false,
+          "source_ids": ["demo-expense-prd"]
+        },
+        {
+          "id": "AC-02",
+          "title": "Prevent spreadsheet formula execution",
+          "given": ["an exported textual field begins with equals, plus, minus, or at-sign"],
+          "when": "the CSV is generated",
+          "then": ["the value is neutralized as text", "the original business value remains recognizable"],
+          "negative": true,
+          "source_ids": ["demo-expense-prd"]
+        },
+        {
+          "id": "AC-03",
+          "title": "Deny unauthorized export",
+          "given": ["the actor lacks the finance analyst role"],
+          "when": "the export endpoint is requested directly",
+          "then": ["access is denied", "no export file is created", "no claim data is returned"],
+          "negative": true,
+          "source_ids": ["demo-expense-prd"]
+        }
+      ],
+      "non_functional_requirements": [
+        {
+          "category": "performance",
+          "requirement": "Ordinary portal requests meet the agreed response target.",
+          "measure": "At least 95 percent complete within two seconds under the agreed load profile; export receives a separate volume budget.",
+          "source_ids": ["demo-expense-prd"]
+        },
+        {
+          "category": "privacy",
+          "requirement": "Export excludes receipt content and unauthorized claims.",
+          "measure": "Automated field and authorization tests pass for every export.",
+          "source_ids": ["demo-expense-prd"]
+        }
+      ],
+      "ux_requirements": ["Explain the included claim population before download"],
+      "data_requirements": ["Retain audit events for seven years", "Prevent application edits to audit records"],
+      "analytics_requirements": ["Measure export count, duration, row count, and failures without claim content"],
+      "dependencies": ["STORY-002", "Finance role source"],
+      "assumptions": ["CSV is the initial finance handoff format"],
+      "risks": ["Large exports need a separate asynchronous design and performance budget"],
+      "open_questions": ["What is the approved-claim payment integration?", "What export volume must be supported?"],
+      "test_notes": ["Include formula-leading values", "Verify unauthorized direct endpoint access", "Verify receipt bytes never appear"],
+      "definition_of_ready": ["Expected volume and payment handoff are agreed"],
+      "definition_of_done": ["CSV contract and authorization tests pass", "Audit retention is configured"],
+      "labels": ["expense", "finance", "audit", "demo"],
+      "story_points": 5,
+      "priority": "Medium",
+      "confidence": 0.9,
+      "citations": [
+        {
+          "source_id": "demo-expense-prd",
+          "source_title": "Expense reimbursement portal — demo PRD",
+          "locator": "Finance and audit",
+          "excerpt": "Finance can export approved, unpaid claims as CSV. Receipt content is not included."
+        }
+      ],
+      "review_status": "DRAFT",
+      "reviewer": "",
+      "review_comment": "",
+      "jira_key": null
+    }
+  ],
+  "cross_cutting_requirements": [
+    "Role checks apply at every API boundary.",
+    "Every state transition produces an immutable audit event.",
+    "Credentials, receipt content, and payment data are excluded from logs and model prompts."
+  ],
+  "glossary": {
+    "claim": "An employee's grouped expense data and receipt evidence.",
+    "pending": "Submitted and awaiting the manager captured at submission.",
+    "approved unpaid": "Manager-approved and not yet recorded as paid by finance."
+  },
+  "assumptions": [
+    "The organization provides authoritative employee, manager, and role data."
+  ],
+  "unresolved_questions": [
+    "Who can reassign a claim when a manager leaves?",
+    "Which currencies and conversion-rate source are supported?",
+    "What payment integration and export volume are required?"
+  ],
+  "generation_notes": [
+    "Recorded keyless demo fixture authored from the bundled demo PRD.",
+    "All stories remain DRAFT until a human reviewer approves them."
+  ],
+  "generated_at": "2026-09-30T15:30:00+00:00",
+  "generator": "requirements-alchemist-demo-fixture"
+}

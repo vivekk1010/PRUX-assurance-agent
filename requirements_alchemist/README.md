@@ -50,6 +50,10 @@ python -m requirements_alchemist
 The local model must support reliable JSON-object output. Larger instruction models
 generally produce more complete decomposition and traceability.
 
+For a keyless recording, select **Load guided demo** in the UI. It loads a bundled expense
+reimbursement PRD and three detailed draft stories. The complete recording script is
+`docs/demo/requirements-alchemist-video-guide.md`.
+
 ## Connect Figma and Atlassian
 
 Provide secrets only through environment variables:

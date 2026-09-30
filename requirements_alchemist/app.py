@@ -10,7 +10,12 @@ from flask import Flask, jsonify, render_template, request, send_file, session
 
 from requirements_alchemist.config import Settings
 from requirements_alchemist.generation import RequirementsLLM
-from requirements_alchemist.models import GenerationInput, SourceDocument, SourceKind
+from requirements_alchemist.models import (
+    GenerationInput,
+    SourceDocument,
+    SourceKind,
+    StoryPackage,
+)
 from requirements_alchemist.outputs import (
     JiraPublisher,
     export_assurance_bundle,
@@ -99,6 +104,36 @@ def create_app(settings: Settings | None = None) -> Flask:
                 "sources": [doc.model_dump(mode="json") for doc in workspace.documents],
                 "package": workspace.package.model_dump(mode="json") if workspace.package else None,
                 "jira_enabled": settings.jira_push_enabled,
+            }
+        )
+
+    @app.post("/api/demo/load")
+    def load_demo():
+        demo_dir = Path(__file__).resolve().parent / "demo"
+        document = SourceDocument(
+            id="demo-expense-prd",
+            kind=SourceKind.PRD,
+            title="Expense reimbursement portal — demo PRD",
+            text=(demo_dir / "expense-reimbursement-prd.md").read_text(
+                encoding="utf-8"
+            ),
+            metadata={"fixture": True, "purpose": "keyless guided demo"},
+        )
+        package = StoryPackage.model_validate_json(
+            (demo_dir / "expense-reimbursement-package.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        with workspace.lock:
+            workspace.documents = [document]
+            workspace.package = package
+            workspace.chat_history = []
+            workspace.persist()
+        return jsonify(
+            {
+                "sources": [document.model_dump(mode="json")],
+                "package": package.model_dump(mode="json"),
+                "demo": True,
             }
         )
 

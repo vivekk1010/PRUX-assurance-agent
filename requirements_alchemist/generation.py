@@ -148,10 +148,17 @@ class RequirementsLLM:
         history: list[dict] | None = None,
     ) -> str:
         if self.is_replay:
-            citations = ", ".join(item.source_id for item in context) or "none"
+            if not context:
+                return "Keyless replay mode found no grounded workspace evidence for this question."
+            evidence = "\n".join(
+                f"- [{item.source_id}] {item.title}: "
+                + " ".join(item.text.split())[:360]
+                for item in context[:3]
+            )
             return (
-                "Replay mode cannot synthesize a live answer. Relevant local sources: "
-                f"{citations}. Configure an LLM provider to chat."
+                "Keyless replay mode retrieved the following grounded evidence. "
+                "Configure a live or local LLM for a synthesized answer:\n"
+                f"{evidence}"
             )
         grounded = "\n\n".join(
             f"[{item.source_id}] {item.title}\n{item.text}" for item in context

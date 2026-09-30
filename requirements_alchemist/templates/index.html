@@ -53,7 +53,9 @@
 <main class="shell">
   <section>
     <div class="card">
-      <h2>1 · Assemble product evidence</h2>
+      <div class="row"><h2 style="flex:3">1 · Assemble product evidence</h2>
+        <button class="secondary" onclick="loadDemo()">Load guided demo</button>
+      </div>
       <div class="row">
         <div><label for="sourceTitle">PRD title</label><input id="sourceTitle" placeholder="Checkout modernization PRD"></div>
         <div><label for="sourceUrl">Figma, Confluence, Jira, or HTTPS PRD URL</label><input id="sourceUrl" placeholder="https://…"></div>
@@ -120,6 +122,7 @@ async function api(url,options={}){
 }
 function escapeHtml(value){const d=document.createElement('div');d.textContent=value??'';return d.innerHTML.replaceAll('"','&quot;').replaceAll("'","&#39;")}
 async function refresh(){state=await api('/api/state');renderSources();renderPackage()}
+async function loadDemo(){try{state=await api('/api/demo/load',{method:'POST',body:'{}'});renderSources();renderPackage();$('backlogTitle').value=state.package.title;$('objective').value=state.package.objective;notice('Guided expense-reimbursement demo loaded')}catch(e){notice(e.message,true)}}
 function renderSources(){
   $('sources').innerHTML=state.sources.length?state.sources.map(s=>`<div class="source">
     <strong>${escapeHtml(s.title)}</strong> <span class="pill">${escapeHtml(s.kind)}</span>

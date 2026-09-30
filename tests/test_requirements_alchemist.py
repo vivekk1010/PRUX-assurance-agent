@@ -281,3 +281,33 @@ def test_replay_web_workflow_generates_and_approves_story(tmp_path):
     assert generated.get_json()["stories"][0]["review_status"] == "DRAFT"
     assert reviewed.get_json()["review_status"] == "APPROVED"
     assert len(list(settings.output_dir.glob("pkg-*.json"))) == 1
+
+
+def test_guided_demo_loads_three_detailed_draft_stories(tmp_path):
+    settings = Settings(
+        llm_provider="replay",
+        reference_dir=tmp_path / "references",
+        workspace_dir=tmp_path / "workspace",
+        output_dir=tmp_path / "output",
+    )
+    settings.reference_dir.mkdir()
+    app = create_app(settings)
+    app.testing = True
+    client = app.test_client()
+    client.get("/")
+    with client.session_transaction() as session:
+        headers = {"X-CSRF-Token": session["csrf"]}
+
+    response = client.post("/api/demo/load", headers=headers, json={})
+    payload = response.get_json()
+
+    assert response.status_code == 200
+    assert payload["demo"] is True
+    assert len(payload["package"]["stories"]) == 3
+    assert all(
+        story["review_status"] == "DRAFT"
+        for story in payload["package"]["stories"]
+    )
+    assert payload["package"]["stories"][0]["acceptance_criteria"][0]["source_ids"] == [
+        "demo-expense-prd"
+    ]
